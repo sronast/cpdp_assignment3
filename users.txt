@@ -1,0 +1,10 @@
+{
+  "blocklist": "",
+  "id": "u_16807",
+  "isGuest": false,
+  "loss": 0,
+  "password": "password123",
+  "quietMode": false,
+  "username": "saransh",
+  "win": 0
+}
