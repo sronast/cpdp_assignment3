@@ -6,6 +6,7 @@
 #include <iostream>
 #include <numeric>
 #include <fstream>
+#include <sys/socket.h>
 
 #include "json.hpp"
 using json = nlohmann::json;

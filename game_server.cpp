@@ -5,7 +5,8 @@
 bool GameServer::start(){
     // 1. Create a server socket here
     // 2. Use select to handle multiple use cases like, accepting new connection, communication between clients
-    // 3.
+    // 3. Load all the saved states
+    // 4. 
 }
 
 vector<string> GameServer::displayAllUsers() {} // who
