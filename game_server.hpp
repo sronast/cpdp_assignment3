@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include <set>
 #include <iostream>
 #include <numeric>
 #include <fstream>
@@ -21,6 +22,15 @@ class GameServer {
 
 
 private:
+    int server_socket;
+    //current_socket: list of sockets that we are watching
+    //ready sockets: for making a copy of current sockets for select()
+    fd_set current_sockets, ready_sockets;
+
+    int max_allowed_connections = 4;
+    
+    set<int> active_connections;
+
     // server should save:
     
     // 1. Socket maintaining connection for each active user
@@ -33,6 +43,14 @@ private:
 public:
 
     bool start();
+
+    int setup_server();
+
+    void handleConnections();
+
+    int acceptNewConnection();
+
+    void handleClient(int client);
 
     vector<string> displayAllUsers();  // who
 
