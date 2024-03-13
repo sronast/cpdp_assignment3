@@ -74,7 +74,7 @@ void GameServer::handleConnections()
                     // handle new connection
                     bool res = acceptNewConnection();
                     if(!res){
-                        
+
                     }
                     // Add new client socket to the set of sockets we are watching
                     //  FD_SET(client_socket, &current_sockets);
@@ -99,10 +99,16 @@ bool GameServer::acceptNewConnection()
     //Accept the connection
     if(client_socket = accept(server_socket, (struct sockaddr *)&client_address, &addr_len)){
         perror("Accept New Connection Error!!");
-
+        return false;
     }
+    cout<<"Max fd: "<<maxfd<<endl;
     FD_SET(client_socket, &current_sockets);
-
+    active_connections.insert(client_socket);
+    maxfd = max(maxfd, client_socket);
+    cout<<"client_socket: "<<client_socket<<endl;
+    cout<<"Max fd: "<<maxfd<<endl;
+    
+    return true;
     // 1. Check if maximum number of connections is already active
     // 2. Handle connection request
     // 3. Add new client to the active_connection set
