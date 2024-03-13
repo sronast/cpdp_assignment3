@@ -1,7 +1,8 @@
 #include <string>
 #include <iostream>
-#include "classes.cpp"
-#include "game.cpp"
+#include "classes.hpp"
+#include "game.hpp"
+#include "game_server.hpp"
 
 using namespace std;
 

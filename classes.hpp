@@ -6,14 +6,13 @@
 #include <iostream>
 #include <numeric>
 #include <fstream>
+
 #include "json.hpp"
 using json = nlohmann::json;
 
-using namespace std;
+#include "utilities.hpp"
 
-int getRandomInt(){
-    return rand();
-}
+using namespace std;
 
 class Message {
 private:
@@ -82,21 +81,5 @@ public:
 
     // Constructors, getters, and setters could be added here
 };
-
-class GameServer {
-public:
-    vector<string> displayAllUsers();  // who
-
-    vector<string> displayAllGames();
-
-    User getUser();  // stats [name]
-
-    User getUser(string username);  // stats [name]
-
-    User registerUser(string username, string password, bool isGuest);
-
-    bool loginUser(string username, string password);
-};
-
 
 #endif

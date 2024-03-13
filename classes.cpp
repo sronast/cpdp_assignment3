@@ -1,10 +1,5 @@
 #include "classes.hpp"
 
-int getRandomInt()
-{
-    return rand();
-}
-
 // Message
 
 Message Message::createNewMessage(string from, string to, string msg)
@@ -66,24 +61,4 @@ void Ratings::updateRanking(string userId)
 
 
 
-// GameServer
-vector<string> GameServer::displayAllUsers() {} // who
 
-vector<string> GameServer::displayAllGames() {}
-
-User GameServer::getUser() {} // stats [name]
-
-User GameServer::getUser(string username) {} // stats [name]
-
-User GameServer::registerUser(string username, string password, bool isGuest)
-{
-    User usr = User();
-    if (isGuest == false)
-    {
-        cout << "Only guest can register as new user" << endl;
-        return usr;
-    }
-    return usr.registerUser(username, password);
-}
-
-bool GameServer::loginUser(string username, string password) {}
