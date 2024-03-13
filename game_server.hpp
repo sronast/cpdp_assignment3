@@ -8,6 +8,13 @@
 #include <numeric>
 #include <fstream>
 #include <sys/socket.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <unistd.h>
+#include <signal.h>
+#include <errno.h>
 
 #include "json.hpp"
 using json = nlohmann::json;
@@ -23,6 +30,10 @@ class GameServer {
 
 private:
     int server_socket;
+
+    struct sockaddr_in server_address;
+
+    int maxfd;
     //current_socket: list of sockets that we are watching
     //ready sockets: for making a copy of current sockets for select()
     fd_set current_sockets, ready_sockets;
@@ -42,16 +53,18 @@ private:
 
 public:
 
-    bool start();
+    void start();
 
-    int setup_server();
+    void setupServer();
 
     void handleConnections();
 
-    int acceptNewConnection();
+    bool acceptNewConnection();
 
     void handleClient(int client);
 
+    void handleConnectionError(const char* msg);
+    
     vector<string> displayAllUsers();  // who
 
     vector<string> displayAllGames();

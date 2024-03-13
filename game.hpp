@@ -12,9 +12,7 @@ private:
     std::map<char, int> columnMap{{'A', 0}, {'B', 1}, {'C', 2}}; 
 
 public:
-    TicTacToe() {
-        resetBoard();
-    }
+    TicTacToe();
     void resetBoard();
 
     void displayBoard() const;
