@@ -3,7 +3,7 @@
 
 #include <string>
 #include <vector>
-#include <set>
+#include <unordered_set>
 #include <iostream>
 #include <numeric>
 #include <fstream>
@@ -29,6 +29,8 @@ class GameServer {
 
 
 private:
+// Server socket
+    int server_port;
     int server_socket;
 
     struct sockaddr_in server_address;
@@ -36,12 +38,16 @@ private:
     int maxfd;
     //current_socket: list of sockets that we are watching
     //ready sockets: for making a copy of current sockets for select()
-    fd_set current_sockets, ready_sockets;
+    fd_set all_sockets;
+    fd_set ready_sockets;
 
     int max_allowed_connections = 4;
     
-    set<int> active_connections;
+    unordered_set<int> active_connections;
 
+    //help
+    string init_message;
+    string commands;
     // server should save:
     
     // 1. Socket maintaining connection for each active user
@@ -52,6 +58,7 @@ private:
 
 
 public:
+    GameServer(int port);
 
     void start();
 

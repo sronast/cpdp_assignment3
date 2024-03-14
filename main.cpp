@@ -6,8 +6,14 @@
 
 using namespace std;
 
-int main(){
-    GameServer gameServer;
+int main(int argc, char* argv[]){
+    if(argc!=2){
+        cout<<"Usuage ./server Server_PORT"<<endl;
+        exit(EXIT_FAILURE);
+    }
+
+
+    GameServer gameServer(atoi(argv[1]));
     gameServer.start();
 
     // Register a new user
