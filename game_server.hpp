@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <unordered_set>
+#include <unordered_map>
 #include <iostream>
 #include <numeric>
 #include <fstream>
@@ -44,6 +45,9 @@ private:
     int max_allowed_connections = 4;
     
     unordered_set<int> active_connections;
+    unordered_map<int, string> socket_user_map; //{4: 'leo', 5, 'guest'}
+    unordered_map<string, int> user_socket_map; //{'leo': 4} do not save guest here
+
 
     //help
     string init_message;

@@ -2,7 +2,8 @@
 
 // GameServer
 
-GameServer::GameServer(int port){
+GameServer::GameServer(int port)
+{
     server_port = port;
     init_message = R"(      
         
@@ -11,8 +12,38 @@ GameServer::GameServer(int port){
         Please be advised by continuing that you agree to the terms of the
         Computer Access and Usage Policy of online tic-tac-toe Server.
 
-
 username (guest):)";
+
+    commands = R"(
+        Commands supported:
+            who                     # List all online users
+            stats [name]            # Display user information
+            game                    # list all current games
+            observe <game_num>      # Observe a game
+            unobserve               # Unobserve a game
+            match <name> <b|w> [t]  # Try to start a game
+            <A|B|C><1|2|3>          # Make a move in a game
+            resign                  # Resign a game
+            refresh                 # Refresh a game
+            shout <msg>             # shout <msg> to every one online
+            tell <name> <msg>       # tell user <name> message
+            kibitz <msg>            # Comment on a game when observing
+            ' <msg>                 # Comment on a game
+            quiet                   # Quiet mode, no broadcast messages
+            nonquiet                # Non-quiet mode
+            block <id>              # No more communication from <id>
+            unblock <id>            # Allow communication from <id>
+            listmail                # List the header of the mails
+            readmail <msg_num>      # Read the particular mail
+            deletemail <msg_num>    # Delete the particular mail
+            mail <id> <title>       # Send id a mail
+            info <msg>              # change your information to <msg>
+            passwd <new>            # change password
+            exit                    # quit the system
+            quit                    # quit the system
+            help                    # print this message
+            ?                       # print this message
+    )";
 }
 
 void GameServer::start()
@@ -23,7 +54,8 @@ void GameServer::start()
     // 4.
     // server_socket = setup_server();
     setupServer();
-    cout << "server setup complete..." << endl;
+    cout << "server setup complete...\n"
+         << endl;
     handleConnections();
 }
 
@@ -36,8 +68,8 @@ void GameServer::setupServer()
 
     bzero(&server_address, sizeof(server_address));
     server_address.sin_family = AF_INET;
-    server_address.sin_addr.s_addr = INADDR_ANY; // htonl(INADDR_ANY);
-    server_address.sin_port = htons(server_port);      // Server port
+    server_address.sin_addr.s_addr = INADDR_ANY;  // htonl(INADDR_ANY);
+    server_address.sin_port = htons(server_port); // Server port
 
     // Bind socket to the address
 
@@ -56,8 +88,8 @@ void GameServer::setupServer()
     FD_SET(server_socket, &all_sockets);
     active_connections.insert(server_socket);
     maxfd = server_socket;
-    cout << "Server socket: " << server_socket << endl;
-    cout << "Server started at IP: " << inet_ntoa(server_address.sin_addr) << " Port: " << htons(server_address.sin_port) << endl;
+    // cout << "Server socket: " << server_socket << endl;
+    // cout << "Server started at IP: " << inet_ntoa(server_address.sin_addr) << " Port: " << htons(server_address.sin_port) << endl;
 }
 
 void GameServer::handleConnections()
@@ -67,30 +99,30 @@ void GameServer::handleConnections()
         // select is destructive, so make a copy
         ready_sockets = all_sockets;
         int socket_count;
-        if ((socket_count = select(maxfd+1, &ready_sockets, NULL, NULL, NULL))<0)
+        if ((socket_count = select(maxfd + 1, &ready_sockets, NULL, NULL, NULL)) < 0)
         {
             handleConnectionError("Select error!!");
         }
         // select(maxfd+1, &ready_sockets, NULL, NULL, NULL);
-        cout << "now handling connection, counts: " << active_connections.size()<<endl;
+        // cout << "now handling connection, counts: " << active_connections.size()<<endl;
         // Go through all fds,
 
-        //Make a temporary vector for iterating over the current fds
+        // Make a temporary vector for iterating over the current fds
         const vector<int> temp_fds = {active_connections.begin(), active_connections.end()};
-        cout<<"set size: "<<active_connections.size()<<endl;
-        for (int it: temp_fds)
+        // cout<<"set size: "<<active_connections.size()<<endl;
+        for (int it : temp_fds)
         {
             // Check which socket is ready
             if (FD_ISSET(it, &ready_sockets))
             {
-                cout<<"set socket: "<<it<<endl;
                 // If it is server socket, connection request received
                 if (it == server_socket)
                 {
                     // handle new connection
                     bool res = acceptNewConnection();
-                    if(!res){
-                        cout<<"Cannot create client..!!!\n";
+                    if (!res)
+                    {
+                        cout << "Cannot create client..!!!\n";
                     }
                     // Add new client socket to the set of sockets we are watching
                     //  FD_SET(client_socket, &all_sockets);
@@ -103,24 +135,26 @@ void GameServer::handleConnections()
                 }
             }
         }
-        cout<<"First iteration completed..."<<endl;
     }
 }
 
 bool GameServer::acceptNewConnection()
 {
-    cout<<"new client request"<<endl;
+    cout << "new client request" << endl;
     int client_socket;
     struct sockaddr_in client_address;
-    socklen_t addr_len =  sizeof(client_address);
-    //Accept the connection
-    if((client_socket = accept(server_socket, (struct sockaddr *)&client_address, &addr_len))<0){
-        if (errno == EINTR) {}
-        else{
+    socklen_t addr_len = sizeof(client_address);
+    // Accept the connection
+    if ((client_socket = accept(server_socket, (struct sockaddr *)&client_address, &addr_len)) < 0)
+    {
+        if (errno == EINTR)
+        {
+        }
+        else
+        {
             perror("Accept New Connection Error!!");
             return false;
         }
-        
     }
 
     // cout<<"Remote Client info:: IP: "<<inet_ntoa(client_address.sin_addr)<< " Port: "<<ntohs(client_address.sin_port)<<endl;
@@ -132,11 +166,13 @@ bool GameServer::acceptNewConnection()
     // cout<<"client_socket: "<<client_socket<<endl;
     // cout<<"Max fd: "<<maxfd<<endl;
 
-    // Try sending init message to the newly connected client 
-    if (send(client_socket, init_message.c_str(), init_message.length(), 0) < 0) {
+    // Try sending init message to the newly connected client
+    socket_user_map[client_socket] = "guest";
+    if (send(client_socket, init_message.c_str(), init_message.length(), 0) < 0)
+    {
         std::cerr << "Send failed" << std::endl;
     }
-    
+
     return true;
     // 1. Check if maximum number of connections is already active
     // 2. Handle connection request
@@ -145,11 +181,36 @@ bool GameServer::acceptNewConnection()
 
 void GameServer::handleClient(int client)
 {
-    cout<<"input from the client: "<<client<<endl;
-    int valread;
-    char buffer[1024];
-    valread = read(client , buffer, 1024); 
-    printf("%s\n",buffer );
+    string user = socket_user_map[client];
+    cout << "input from the client: " << client << endl;
+    int msg_size;
+    char buffer[2048];
+    bzero(&buffer, 2048);
+    msg_size = read(client, buffer, 2048);
+    printf("%s", buffer);
+    cout << "msg size: " << msg_size << endl;
+
+    // send help list if no msg
+    if (msg_size == 2 && buffer[0] == '\n' || buffer[0] =='\r')
+    {   
+        string message = commands;
+        if(user == "guest"){
+            string msg = R"(
+        
+        You are logged in as a guest. The only command that you can use is 
+        'register username password' and 'quit/exit'.
+        
+        <guest: 0>)";
+        message = string(message) + msg;
+        }
+
+        if (send(client, message.c_str(), message.length(), 0) < 0)
+        {
+            std::cerr << "Send failed" << std::endl;
+        }
+        cout<<"sent.."<<endl;
+    }
+
 }
 
 void GameServer::handleConnectionError(const char *msg)
