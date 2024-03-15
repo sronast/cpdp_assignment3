@@ -45,7 +45,7 @@ private:
     int max_allowed_connections = 4;
     
     unordered_set<int> active_connections;
-    unordered_map<int, string> socket_user_map; //{4: 'leo', 5, 'guest'}
+    unordered_map<int, string> socket_user_map; //{4: 'leo', 5: 'guest'}
     unordered_map<string, int> user_socket_map; //{'leo': 4} do not save guest here
 
 
@@ -78,6 +78,14 @@ public:
     void handleClient(int client);
 
     void handleConnectionError(const char* msg);
+
+    //Handling different messsages
+
+    void handleEmptyMsg(int &client, string &msg, vector<string> &tokens);
+    
+    void handleExitMsg(int &client);
+    //Handling different messsages
+
     
     vector<string> displayAllUsers();  // who
 
