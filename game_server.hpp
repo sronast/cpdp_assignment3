@@ -51,7 +51,10 @@ private:
 
     //help
     string init_message;
-    string commands;
+    string manual;
+
+    //game
+    unordered_set<string> supported_commands;
     // server should save:
     
     // 1. Socket maintaining connection for each active user

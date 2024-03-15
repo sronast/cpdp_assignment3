@@ -14,7 +14,7 @@ GameServer::GameServer(int port)
 
 username (guest):)";
 
-    commands = R"(
+    manual = R"(
         Commands supported:
             who                     # List all online users
             stats [name]            # Display user information
@@ -44,6 +44,21 @@ username (guest):)";
             help                    # print this message
             ?                       # print this message
     )";
+
+    supported_commands = {
+        "who", "stats", "game"  ,"observe" , "unobserve", "match", "A1", "A2", 
+        "A3", "B1", "B2", "B3","C1", "C2", "C3", "resign", "refresh", "shout", 
+        "tell", "kibitz", "quiet", "nonquiet", "block", "unblock", "listmail",
+        "readmail", "deletemail", "mail", "info", "passwd", "exit", "quit", "help", "?"                 
+    };
+
+    /*
+    who, stats [name], game  ,observe <game_num> , unobserve, match <name> <b|w> [t]
+            <A|B|C><1|2|3> , resign, refresh, shout <msg>, tell <name> <msg> 
+            kibitz <msg>, , quiet, nonquiet, block <id>, unblock <id>, listmail, readmail <msg_num> 
+            deletemail <msg_num> , mail <id> <title>, info <msg>, passwd <new>, exit         
+            quit, help, ?  
+    */
 }
 
 void GameServer::start()
@@ -122,7 +137,7 @@ void GameServer::handleConnections()
                     bool res = acceptNewConnection();
                     if (!res)
                     {
-                        cout << "Cannot create client..!!!\n";
+                        cout << "Cannot accept new client's connection ..!!!\n";
                     }
                     // Add new client socket to the set of sockets we are watching
                     //  FD_SET(client_socket, &all_sockets);
@@ -176,35 +191,41 @@ bool GameServer::acceptNewConnection()
     return true;
     // 1. Check if maximum number of connections is already active
     // 2. Handle connection request
-    // 3. Add new client to the active_connection set
 }
 
-void GameServer::handleClient(int client)
+void GameServer::handleClient(int client)// For handling different client inputs
 {
     string user = socket_user_map[client];
     cout << "input from the client: " << client << endl;
+    
     int msg_size;
     char buffer[2048];
     bzero(&buffer, 2048);
     msg_size = read(client, buffer, 2048);
-    printf("%s", buffer);
-    cout << "msg size: " << msg_size << endl;
+
+    //Convert buffer to string
+    string received_data(buffer, msg_size);
+
+    // cout << "msg size: " << msg_size << endl;
 
     // send help list if no msg
-    if (msg_size == 2 && buffer[0] == '\n' || buffer[0] =='\r')
+    // if (msg_size == 2 && buffer[0] == '\n' || buffer[0] =='\r')
+
+    vector<string> tokens = tokenize(received_data, ' ');
+    for(string t: tokens){
+        cout<<t<<endl;
+    }
+
+    if (received_data[0] == '\n' || received_data[0] =='\r')
     {   
-        string message = commands;
+        string manual_msg = manual;
         if(user == "guest"){
-            string msg = R"(
-        
-        You are logged in as a guest. The only command that you can use is 
-        'register username password' and 'quit/exit'.
-        
-        <guest: 0>)";
-        message = string(message) + msg;
+            string msg = "\tYou are logged in as a guest.\n\tThe only command that you can use is\\
+            'register username password' and 'quit/exit'.\n<guest: 0>";
+        manual_msg = string(manual_msg) + msg;
         }
 
-        if (send(client, message.c_str(), message.length(), 0) < 0)
+        if (send(client, manual_msg.c_str(), manual_msg.length(), 0) < 0)
         {
             std::cerr << "Send failed" << std::endl;
         }
