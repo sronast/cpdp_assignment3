@@ -35,7 +35,7 @@ username (guest):)";
             unblock <id>            # Allow communication from <id>
             listmail                # List the header of the mails
             readmail <msg_num>      # Read the particular mail
-            deletemail <msg_num>    # Delete the particular mail
+            deletemail <msg_num>    # Delete the part02    icular mail
             mail <id> <title>       # Send id a mail
             info <msg>              # change your information to <msg>
             passwd <new>            # change password
@@ -204,10 +204,6 @@ void GameServer::handleClient(int client) // For handling different client input
     // Convert buffer to string
     string received_data(buffer, msg_size);
 
-    // cout << "msg size: " << msg_size << endl;
-
-    // send help list if no msg
-    // if (msg_size == 2 && buffer[0] == '\n' || buffer[0] =='\r')
 
     vector<string> tokens = tokenize(received_data, ' ');
     for (string t : tokens)
@@ -222,6 +218,7 @@ void GameServer::handleClient(int client) // For handling different client input
     else if(tokens[0] == "exit" || tokens[0]=="quit"){
         handleExitMsg(client);
     }
+
 }
 void GameServer::handleEmptyMsg(int &client, string &msg, vector<string> &tokens)
 {
@@ -231,7 +228,7 @@ void GameServer::handleEmptyMsg(int &client, string &msg, vector<string> &tokens
     {
         string msg = "\tYou are logged in as a guest.\n"
         "\tThe only command that you can use is 'register username password' and 'quit/exit'.\n"
-        "<guest: 0>";
+        "<guest: >";
         manual_msg = string(manual_msg) + msg;
     }
 
