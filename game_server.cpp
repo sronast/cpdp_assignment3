@@ -204,10 +204,6 @@ void GameServer::handleClient(int client) // For handling different client input
     // Convert buffer to string
     string received_data(buffer, msg_size);
 
-    // cout << "msg size: " << msg_size << endl;
-
-    // send help list if no msg
-    // if (msg_size == 2 && buffer[0] == '\n' || buffer[0] =='\r')
 
     vector<string> tokens = tokenize(received_data, ' ');
     for (string t : tokens)
@@ -215,13 +211,94 @@ void GameServer::handleClient(int client) // For handling different client input
         cout << t << endl;
     }
 
+    string command = tokens[0];
+    cout << "Command is\n " << command;
+    cout << "=============== " << endl;
+    // cout << "Tokens is " << tokens;
+
     if (received_data[0] == '\n' || received_data[0] == '\r')
     {
         handleEmptyMsg(client, received_data, tokens);
     }
-    else if(tokens[0] == "exit" || tokens[0]=="quit"){
+    else if(command == "exit" || command=="quit"){
         handleExitMsg(client);
     }
+    else if (command == "who"){
+        
+    }
+    else if (command == "stats"){
+
+    }
+    else if (command == "game"){
+
+    }
+    else if (command == "observe"){
+
+    }
+    else if (command == "unobserve"){
+
+    }
+    else if (command == "match"){
+
+    }
+    else if (command == "resign"){
+
+    }
+    else if (command == "refresh"){
+
+    }
+    else if (command == "shout"){
+
+    }
+    else if (command == "tell"){
+
+    }
+    else if (command == "kibitz"){
+
+    }
+    else if (command == "\""){
+
+    }
+    else if (command == "quiet"){
+
+    }
+    else if (command == "nonquiet"){
+
+    }
+    else if (command == "block"){
+
+    }
+    else if (command == "unblock"){
+
+    }
+    else if (command == "listmail"){
+
+    }
+    else if (command == "readmail"){
+
+    }
+    else if (command == "deletemail"){
+
+    }
+    else if (command == "mail"){
+
+    }
+    else if (command == "info"){
+
+    }
+    else if (command == "passwd"){
+
+    }
+    else if (command == "help"){
+
+    }
+    else if (command == "?"){
+
+    }
+    else if (command == "register"){
+
+    }
+
 }
 void GameServer::handleEmptyMsg(int &client, string &msg, vector<string> &tokens)
 {
@@ -231,7 +308,7 @@ void GameServer::handleEmptyMsg(int &client, string &msg, vector<string> &tokens
     {
         string msg = "\tYou are logged in as a guest.\n"
         "\tThe only command that you can use is 'register username password' and 'quit/exit'.\n"
-        "<guest: 0>";
+        "<guest: >";
         manual_msg = string(manual_msg) + msg;
     }
 
