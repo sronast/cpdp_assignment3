@@ -35,7 +35,7 @@ username (guest):)";
             unblock <id>            # Allow communication from <id>
             listmail                # List the header of the mails
             readmail <msg_num>      # Read the particular mail
-            deletemail <msg_num>    # Delete the particular mail
+            deletemail <msg_num>    # Delete the part02    icular mail
             mail <id> <title>       # Send id a mail
             info <msg>              # change your information to <msg>
             passwd <new>            # change password
