@@ -1,0 +1,25 @@
+/* No need to include the previous CSS code, as Tailwind CSS provides all necessary styles */
+@import '~bootstrap/dist/css/bootstrap.min.css';
+
+
+
+.game {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+.board {
+  width: 300px; /* Adjust as needed */
+}
+
+.board-row:after {
+  clear: both;
+  content: '';
+  display: table;
+}
+
+.status {
+  margin-bottom: 10px;
+}

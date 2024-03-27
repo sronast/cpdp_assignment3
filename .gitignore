@@ -4,3 +4,4 @@
 .* !.gitignore
 server
 .nfs0000000003c2026c00000e92
+tictactoe/node_modules
