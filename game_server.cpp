@@ -129,7 +129,7 @@ username (guest):)";
                         else if (key == "mail")
                         {
                             // Parse mail
-                            std::vector<std::string> mail = user.parseMail(value);
+                            std::vector<Mail> mail = user.parseMail(value);
                             user.setMail(mail);
                         }
                         else if (key == "quietMode")
@@ -208,11 +208,11 @@ username (guest):)";
     }
 }
 
-
 void GameServer::start()
 {
     setupServer();
-    cout << "server setup complete...\n"<< endl;
+    cout << "server setup complete...\n"
+         << endl;
     handleConnections();
 }
 
@@ -379,13 +379,14 @@ bool GameServer::handleClient(int client) // For handling different client input
 void GameServer::handleLogin(int &client, bool &is_empty_msg, vector<string> &tokens,
                              string &command, string &received_data)
 {
-    cout<<"Handle login called...\n";
+    cout << "Handle login called...\n";
     string user = not_logged_in[client];
     cout << "recieved data is " << received_data << endl;
 
-    for(auto it:all_users){
-            cout<<it<<endl;
-        }
+    for (auto it : all_users)
+    {
+        cout << it << endl;
+    }
     // if empty, then expect username else add client as guest
     if (user.empty())
     {
@@ -396,7 +397,7 @@ void GameServer::handleLogin(int &client, bool &is_empty_msg, vector<string> &to
             active_guests.insert(client);
             handleEmptyMsg(client);
         }
-        
+
         else if ((all_users.find(command) != all_users.end()) && (tokens.size() == 1))
         {
             not_logged_in[client] = command;
@@ -423,7 +424,6 @@ void GameServer::handleLogin(int &client, bool &is_empty_msg, vector<string> &to
             oss << "Successfully logged in..\n <" << usr_name << ">:";
             std::string msg = oss.str();
             sendMsg(client, msg);
-                          
         }
         else
         {
@@ -475,17 +475,56 @@ void GameServer::handleGuest(int &client, bool &is_empty_msg, vector<string> &to
     }
 }
 
+// Function to generate a random number using timestamp as a seed
+int generateRandomNumber(int min, int max) {
+    // Get the current time as a timestamp
+    auto now = std::chrono::system_clock::now();
+    auto timestamp = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
+
+    // Use the timestamp as a seed for the random number engine
+    std::mt19937 gen(static_cast<unsigned>(timestamp));
+
+    // Create a uniform distribution for the range
+    std::uniform_int_distribution<int> distribution(min, max);
+
+    // Generate a random number
+    return distribution(gen);
+}
+string getTimeNow(){
+    // Get the current time
+    std::time_t currentTime = std::time(nullptr);
+
+    // Convert the current time to a string
+    const int bufferSize = 80; // Adjust buffer size as needed
+    char buffer[bufferSize];
+    std::strftime(buffer, bufferSize, "%Y-%m-%d %H:%M:%S", std::localtime(&currentTime));
+    return buffer;
+}
+
 void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<string> &tokens,
                                       string &command, string &received_data)
 {
     if (command == "who")
     {
         // list all online users
+        string username = socket_user_map[client];
         string allOnlineUsers = getOnlineUsers();
+        allOnlineUsers += "\n <"+ username + ">: ";
         sendMsg(client, allOnlineUsers);
     }
     else if (command == "stats")
     {
+        string userNameToView = tokens[1];
+        User user = allUsersInfo[userNameToView];
+        string username = socket_user_map[client];
+        std::ostringstream oss;
+        oss << "Stats for: " << userNameToView << ": \n"
+            << "Wins: " << user.getWins()
+            << "\n Loss: " << user.getLoss()
+            << "\n Draws: " << user.getDraw()
+            << "\n <"+ username + ">: ";
+        std::string msg = oss.str();
+        sendMsg(client, msg);
     }
     else if (command == "game")
     {
@@ -507,9 +546,35 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
     }
     else if (command == "shout")
     {
+        string username = socket_user_map[client];
+        string msg = tokens[1];
+        for( const auto it: socket_user_map){
+            int clientId = it.first;
+            string username = socket_user_map[clientId];
+            User usr = allUsersInfo[username];
+            vector<string> userBlockList = usr.getBlockList();
+            auto its = find(userBlockList.begin(), userBlockList.end(), username);
+            if (!usr.getQuietMode() && its == userBlockList.end()){
+                // only send message when the user is not in quiet mode and has not blocked the user 
+                sendMsg(clientId, msg);
+            }
+        }
     }
     else if (command == "tell")
     {
+        string messageTo = tokens[1];
+        string message = tokens[2];
+        string userFrom = socket_user_map[client];
+
+        User user = allUsersInfo[messageTo];
+        // int randomId = generateRandomNumber(1000, 9999);
+        Message msg = Message(userFrom,message, "unread",getTimeNow());
+        vector<Message> userMessages = user.getMessages();
+        userMessages.push_back(msg);
+        user.setMessages(userMessages);
+        string msgTo = "You have recieved a new message from " + userFrom;
+        int messageToClient = user_socket_map[messageTo];
+        sendMsg(messageToClient, msgTo);
     }
     else if (command == "kibitz")
     {
@@ -519,43 +584,140 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
     }
     else if (command == "quiet")
     {
+        string username = socket_user_map[client];
+        User user = allUsersInfo[username];
+        user.setQuietMode(true);
+        string msg = "Quiet mode has been set on! \n <" + username + ">:";
+        sendMsg(client, msg);
     }
     else if (command == "nonquiet")
     {
+        string username = socket_user_map[client];
+        User user = allUsersInfo[username];
+        user.setQuietMode(false);
+        string msg = "Quiet mode has been set off! \n <" + username + ">:";
+        sendMsg(client, msg);
     }
     else if (command == "block")
     {
+        string username = socket_user_map[client];
+        string userToBlock = tokens[1];
+        User user = allUsersInfo[username];
+        vector<string> blockList = user.getBlockList();
+        blockList.push_back(userToBlock);
+        user.setBlockList(blockList);
+        string msg = userToBlock + " has been added to block list! \n <" + username + ">:";
+        sendMsg(client, msg);
     }
     else if (command == "unblock")
     {
+        string username = socket_user_map[client];
+        string userToUnblock = tokens[1];
+        User user = allUsersInfo[username];
+        vector<string> blockList = user.getBlockList();
+
+        // Find the position of userToUnblock in the blockList vector
+        auto it = std::find(blockList.begin(), blockList.end(), userToUnblock);
+        if (it != blockList.end())
+        {
+            // If userToUnblock is found, erase it from the blockList vector
+            blockList.erase(it);
+            // Update the block list in the user object
+            user.setBlockList(blockList);
+            // Update the user in the allUsersInfo map
+            allUsersInfo[username] = user;
+        }
+        else
+        {
+            // Handle case where userToUnblock is not found in the block list
+            cout << "User " << userToUnblock << " is not in the block list." << endl;
+        }
+        string msg = userToUnblock + " has been removed from block list! \n <" + username + ">:";
+        sendMsg(client, msg);
     }
     else if (command == "listmail")
     {
+        string username = socket_user_map[client];
+        User user = allUsersInfo[username];
+        vector<Mail> mails = user.getMail();
+        string msg = "Headers: \n";
+        for (const auto it : mails)
+        {
+            msg += it.getHeaders() + "\n";
+        }
+        msg += "<" + username + ">: ";
+        sendMsg(client, msg);
     }
     else if (command == "readmail")
     {
+        string username = socket_user_map[client];
+        User user = allUsersInfo[username];
+        string idToMatch = tokens[1];
+        vector<Mail> mails = user.getMail();
+        string msg = "Message: \n";
+        for (const auto it : mails)
+        {
+            if (it.getId() == stoi(idToMatch))
+            {
+                msg += it.getMsg() + "\n";
+            }
+        }
+        msg += "<" + username + ">: ";
+        sendMsg(client, msg);
     }
     else if (command == "deletemail")
     {
+        string username = socket_user_map[client];
+        User user = allUsersInfo[username];
+        string idToMatch = tokens[1];
+        vector<Mail> mails = user.getMail();
+
+        auto it = std::find_if(mails.begin(), mails.end(), [&](const Mail &mail)
+                               { return mail.getId() == stoi(idToMatch); });
+
+        string msg ="";
+        if (it != mails.end())
+        {
+            mails.erase(it);
+            user.setMail(mails);
+            allUsersInfo[username] = user;
+            msg += "Message deleted successfully. \n";
+        }
+        else
+        {
+            msg +=  "Message with ID " + idToMatch + " not found. \n";
+        }
+        msg += "<" + username + ">: ";
+        sendMsg(client, msg);
     }
     else if (command == "mail")
     {
+        string mailTo = tokens[1];
+        string message = tokens[2];
+        string userFrom = socket_user_map[client];
+        User user = allUsersInfo[mailTo];
+        int randomId = generateRandomNumber(1000, 9999);
+        Mail mail = Mail(randomId, userFrom, message, "unread", getTimeNow(), message);
     }
     else if (command == "info")
     {
     }
     else if (command == "passwd")
     {
+        string username = socket_user_map[client];
+        User user = allUsersInfo[username];
+        user.setPassword(tokens[1]);
+        string msg = "Password changed successfully! \n <"+username+">: ";
+        sendMsg(client, msg);
     }
-    else if (command == "help")
+    else if (command == "help" || command == "?")
     {
-    }
-    else if (command == "?")
-    {
+        sendMsg(client, manual);
     }
     else
     {
         string msg = "Command not suppported!!";
+        sendMsg(client, msg);
     }
 }
 

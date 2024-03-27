@@ -40,8 +40,8 @@ bool User::getIsPlaying() const { return isPlaying; }
 void User::setMessages(const std::vector<Message>& messages) { this->messages = messages; }
 std::vector<Message> User::getMessages() const { return messages; }
 
-void User::setMail(const std::vector<std::string>& mail) { this->mail = mail; }
-std::vector<std::string> User::getMail() const { return mail; }
+void User::setMail(const std::vector<Mail>& mail) { this->mail = mail; }
+std::vector<Mail> User::getMail() const { return mail; }
 
 void User::setQuietMode(bool quietMode) { this->quietMode = quietMode; }
 bool User::getQuietMode() const { return quietMode; }
@@ -60,57 +60,58 @@ int User::getTotalGames() const { return totalGames; }
 
 std::vector<Message> User::parseMessage(const std::string& messageStr) {
     std::vector<Message> messages;
-    
-    // Check if the message string starts and ends with curly braces
     if (messageStr.front() != '{' || messageStr.back() != '}') {
-        // Invalid format
         return messages;
     }
-
-    // Remove the outer curly braces
     std::string messagesContent = messageStr.substr(1, messageStr.size() - 2);
-    // cout << "message content is " << messageStr.substr(1, messageStr.size() - 2) << endl;
     messagesContent = messagesContent.substr(1);
     messagesContent.pop_back();
-    // cout << "updated message" << messagesContent;
-
-
-
-    // Tokenize the content using commas
     std::stringstream ss(messagesContent);
     std::string item;
     std::vector<std::string> parts;
     while (std::getline(ss, item, ',')) {
-        // Remove leading and trailing whitespace
         item.erase(0, item.find_first_not_of(" \t\n\r\f\v"));
         item.erase(item.find_last_not_of(" \t\n\r\f\v") + 1);
 
-        // Check if the item starts and ends with double quotes
         if (item.front() != '"' || item.back() != '"') {
-            // Invalid format
             continue;
         }
-
-        // Remove the outer double quotes
         std::string msg = item.substr(1, item.size() - 2);
-        // cout << "msg is " << msg << endl;
         parts.push_back(msg);
-
 
     }
         if (parts.size() == 4) {
-            // Create a Message object and add it to the vector
-            // cout << "component 1" << parts[0] << endl; 
-            // cout << "component 2" << parts[1] << endl; 
-            // cout << "component 3" << parts[2] << endl; 
-            // cout << "component 4" << parts[3] << endl; 
             messages.push_back(Message(parts[0], parts[3], parts[2], parts[1]));
         }
     return messages;
 }
 
-std::vector<std::string> User::parseMail(const std::string& mailStr){
-    vector<string> mails= {mailStr};
+std::vector<Mail> User::parseMail(const std::string& mailStr){
+    std::vector<Mail> mails;
+    if (mailStr.front() != '{' || mailStr.back() != '}') {
+        return mails;
+    }
+    std::string mailContent = mailStr.substr(1, mailStr.size() - 2);
+    mailContent = mailContent.substr(1);
+    mailContent.pop_back();
+    std::stringstream ss(mailContent);
+    std::string item;
+    std::vector<std::string> parts;
+    while (std::getline(ss, item, ',')) {
+        item.erase(0, item.find_first_not_of(" \t\n\r\f\v"));
+        item.erase(item.find_last_not_of(" \t\n\r\f\v") + 1);
+
+        if (item.front() != '"' || item.back() != '"') {
+            continue;
+        }
+        std::string msg = item.substr(1, item.size() - 2);
+        parts.push_back(msg);
+
+    }
+        if (parts.size() == 6) {
+
+            mails.push_back(Mail(stoi(parts[0]), parts[1], parts[5], parts[3], parts[2], parts[4]));
+        }
     return mails;
     
 }
@@ -157,6 +158,58 @@ void Message::setTime(const std::string& time) {
     this->time = time;
 }
 
+Mail::Mail(const int& id, const std::string& from, const std::string& msg, const std::string& status, const std::string& time, string &header){}
+
+// Getter and setter for 'from' field
+std::string Mail::getFrom() const {
+    return from;
+}
+
+void Mail::setFrom(const std::string& from) {
+    this->from = from;
+}
+
+// Getter and setter for 'msg' field
+std::string Mail::getMsg() const {
+    return msg;
+}
+
+void Mail::setMsg(const std::string& msg) {
+    this->msg = msg;
+}
+
+// Getter and setter for 'status' field
+std::string Mail::getStatus() const {
+    return status;
+}
+
+void Mail::setStatus(const std::string& status) {
+    this->status = status;
+}
+
+// Getter and setter for 'time' field
+std::string Mail::getTime() const {
+    return time;
+}
+
+void Mail::setTime(const std::string& time) {
+    this->time = time;
+}
+
+std::string Mail::getHeaders() const {
+    return header;
+}
+void Mail::setHeader(const std::string& header) {
+    this->header = header;
+}
+
+void Mail::setId(const int& id){
+    this -> id = id;
+}
+int Mail::getId() const
+{
+    return id;
+}
 
 
 // Ratings

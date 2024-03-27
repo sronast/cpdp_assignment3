@@ -34,6 +34,36 @@ public:
     void setStatus(const std::string& status);
     std::string getTime() const;
     void setTime(const std::string& time);
+   
+    
+};
+
+class Mail {
+private:
+    std::string from;
+    std::string msg;
+    std::string status;  // "init", "sent", "delivered", "read"
+    std::string time;
+    string header;
+    int id;
+
+public:
+    // Constructor
+    Mail(const int& id, const std::string& from, const std::string& msg, const std::string& status, const std::string& time, string &header);
+
+    // Getters and setters for member variables
+    std::string getFrom() const;
+    void setFrom(const std::string& from);
+    std::string getMsg() const;
+    void setMsg(const std::string& msg);
+    std::string getStatus() const;
+    void setStatus(const std::string& status);
+    std::string getTime() const;
+    void setTime(const std::string& time);
+    std::string getHeaders() const;
+    void setHeader(const std::string& header);
+    void setId(const int& id);
+    int getId() const;
 };
 
 
@@ -47,12 +77,13 @@ private:
     int draw;
     bool isPlaying;
     std::vector<Message> messages;
-    std::vector<std::string> mail;
+    std::vector<Mail> mail;
     bool quietMode;
     std::vector<std::string> blockList;
     int rank;
     int points;
     int totalGames;
+    
 
 public:
     // Constructor
@@ -80,8 +111,8 @@ public:
     void setMessages(const std::vector<Message>& messages);
     std::vector<Message> getMessages() const;
 
-    void setMail(const std::vector<std::string>& mail);
-    std::vector<std::string> getMail() const;
+    void setMail(const std::vector<Mail>& mail);
+    std::vector<Mail> getMail() const;
 
     void setQuietMode(bool quietMode);
     bool getQuietMode() const;
@@ -100,7 +131,7 @@ public:
 
     std::vector<Message> parseMessage(const std::string& messageStr);
 
-    std::vector<std::string> parseMail(const std::string& mailStr);
+    std::vector<Mail> parseMail(const std::string& mailStr);
     std::vector<std::string> parseBlockList(const std::string& blockListStr);
 
     // std::string getFormattedMessages() const;
