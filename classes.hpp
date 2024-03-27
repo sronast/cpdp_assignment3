@@ -83,9 +83,12 @@ private:
     int rank;
     int points;
     int totalGames;
-    
+    bool isSendingMessage;
 
 public:
+    string opponent;
+    unordered_set<string> request_from;
+    unordered_set<string> request_to;
     // Constructor
     User();
 
@@ -107,6 +110,9 @@ public:
 
     void setIsPlaying(bool isPlaying);
     bool getIsPlaying() const;
+    
+    void setIsSendingMsg();
+    bool getIsSendingMsg() const;
 
     void setMessages(const std::vector<Message>& messages);
     std::vector<Message> getMessages() const;

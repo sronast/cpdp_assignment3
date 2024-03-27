@@ -106,7 +106,12 @@ public:
     void sendMsg(int &client, string &msg);
     //Handling different messsages
 
-    
+    // USers
+    bool isUserOnline(string &user);
+
+    bool isUserRegistered(string &user);
+
+
     vector<string> displayAllUsers(); 
 
     string getOnlineUsers();

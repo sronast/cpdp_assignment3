@@ -420,9 +420,9 @@ void GameServer::handleLogin(int &client, bool &is_empty_msg, vector<string> &to
         {
             user_socket_map[user] = client;
             socket_user_map[client] = user;
-            std::ostringstream oss;
+            ostringstream oss;
             oss << "Successfully logged in..\n <" << usr_name << ">:";
-            std::string msg = oss.str();
+            string msg = oss.str();
             sendMsg(client, msg);
         }
         else
@@ -504,6 +504,9 @@ string getTimeNow(){
 void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<string> &tokens,
                                       string &command, string &received_data)
 {
+    ostringstream oss;
+    string user_name = socket_user_map[client];
+    User user = allUsersInfo[user_name];
     if (command == "who")
     {
         // list all online users
@@ -537,6 +540,51 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
     }
     else if (command == "match")
     {
+
+        string opponent_name = tokens[1];
+        User opponent = allUsersInfo[opponent_name];
+        int opponet_fd = user_socket_map[opponent_name];
+
+        if(user.getIsPlaying()){
+            oss << "You are currently playing a game..\nComplete it to send new match\\ 
+            request..\n<" << user_name << ">:";
+        }
+
+        else if (!isUserOnline(opponent_name))
+        {
+            oss << "User " << opponent_name << " is offline..\n<" << user_name << ">:";
+        }
+        else if(opponent.getIsPlaying()){
+            oss << "User " << opponent_name << " is currently playing..\n<" << user_name << ">:";
+        }
+        else{
+            bool is_response = isItemInSet(opponent_name, user.request_from);
+            if(is_response){
+                // The opponent has already sent match request 
+                // User is acceptig the request
+                user.request_from.erase(opponent_name);
+                user.setIsPlaying(true);
+                opponent.setIsPlaying(true);
+                user.opponent = opponent_name;
+                opponent.opponent = user_name;
+
+                // create a new instance of game
+
+                
+            }
+            else{
+                // The user is sending match request to the opponent_name
+                opponent.request_from.insert(user_name);
+                oss <<user_name<< " has invited you for a match. To accept type command: match " <<user_name<<  "\n<" << opponent_name << ">:";
+                string msg = oss.str();
+                sendMsg(opponet_fd, msg);
+                oss.str("");
+                oss << "Sent match request to " << opponent_name << "\n<" << user_name << ">:";
+            }
+        }
+        string msg = oss.str();
+        sendMsg(client, msg);
+    
     }
     else if (command == "resign")
     {
@@ -713,6 +761,13 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
     else if (command == "help" || command == "?")
     {
         sendMsg(client, manual);
+    
+    }
+    else if (is_empty_msg && !user.getIsSendingMsg())
+    {
+        oss << "<" << user_name << ">:";
+        string msg = oss.str();
+        sendMsg(client, msg);
     }
     else
     {
@@ -871,3 +926,21 @@ User GameServer::registerUser(string username, string password, bool isGuest)
 }
 
 bool GameServer::loginUser(string username, string password) {}
+
+bool GameServer::isUserOnline(string &user)
+{
+    if (user_socket_map.find(user) != user_socket_map.end())
+    {
+        return true;
+    }
+    return false;
+}
+
+bool GameServer::isUserRegistered(string &user)
+{
+    if (all_users.find(user) != all_users.end())
+    {
+        return true;
+    }
+    return false;
+}

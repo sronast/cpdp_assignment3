@@ -19,5 +19,6 @@ int getRandomInt();
 vector<string> tokenize(string &command, const char &delimeter);
 string trim(const string& str);
 int getMaxSet(unordered_set<int> &mySet);
+bool isItemInSet(string &item, unordered_set<string> &mySet);
 
 #endif

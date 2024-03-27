@@ -44,3 +44,11 @@ vector<string> tokenize(string &data, const char &delimeter)
     }
     return tokens;
 }
+
+bool isItemInSet(string &item, unordered_set<string> &mySet){
+    if (mySet.find(item) != mySet.end())
+    {
+        return true;
+    }
+    return false;
+}
