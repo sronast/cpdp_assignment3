@@ -77,7 +77,7 @@ void initializeUser() {
     for (const auto& entry : std::filesystem::directory_iterator(usersFolder)) {
         // Check if the entry is a regular file
         if (entry.is_regular_file()) {
-            cout << "is a regular file" << endl;
+            // cout << "is a regular file" << endl;
             std::string filename = entry.path().filename().string();
             // Extract username from filename
             std::string username = filename.substr(0, filename.find(".txt"));
@@ -149,33 +149,33 @@ void initializeUser() {
     cout << "Printing all users:" << endl;
     for (const auto& user : allUsers) {
         cout << "Username: " << user.getUsername() << endl;
-        cout << "Password: " << user.getPassword() << endl;
-        cout << "win: " << user.getWins() << endl;
-        cout << "loss: " << user.getLoss() << endl;
-        cout << "draw: " << user.getDraw() << endl;
-        cout << "points: " << user.getPoints() << endl;
-        cout << "rank: " << user.getRank() << endl;
-        cout << "Messages:" << endl;
+        // cout << "Password: " << user.getPassword() << endl;
+        // cout << "win: " << user.getWins() << endl;
+        // cout << "loss: " << user.getLoss() << endl;
+        // cout << "draw: " << user.getDraw() << endl;
+        // cout << "points: " << user.getPoints() << endl;
+        // cout << "rank: " << user.getRank() << endl;
+        // cout << "Messages:" << endl;
         const std::vector<Message>& messages = user.getMessages();
-        for (const auto& message : messages) {
-            cout << "From: " << message.getFrom() << endl;
-            cout << "Time: " << message.getTime() << endl;
-            cout << "Status: " << message.getStatus() << endl;
-            cout << "Message: " << message.getMsg() << endl;
-            cout << endl;
-        }
+        // for (const auto& message : messages) {
+        //     cout << "From: " << message.getFrom() << endl;
+        //     cout << "Time: " << message.getTime() << endl;
+        //     cout << "Status: " << message.getStatus() << endl;
+        //     cout << "Message: " << message.getMsg() << endl;
+        //     cout << endl;
+        // }
 
-        cout << "mail" << endl;
-        for (const auto&mail: user.getMail()) {
-            cout << mail << endl;
-        }
-        cout << "block list" << endl;
-        for (const auto&block: user.getBlockList()) {
-            cout << block << endl;
-        }
-        cout << "quietMode: " << user.getQuietMode() << endl;
-        cout << "isPLaying: " << user.getIsPlaying() << endl;
-        cout << "totalGames: " << user.getTotalGames() << endl;
+        // cout << "mail" << endl;
+        // for (const auto&mail: user.getMail()) {
+        //     cout << mail << endl;
+        // }
+        // cout << "block list" << endl;
+        // for (const auto&block: user.getBlockList()) {
+        //     cout << block << endl;
+        // }
+        // cout << "quietMode: " << user.getQuietMode() << endl;
+        // cout << "isPLaying: " << user.getIsPlaying() << endl;
+        // cout << "totalGames: " << user.getTotalGames() << endl;
         // Print other user information as needed
     }
     }
@@ -414,13 +414,23 @@ void GameServer::handleGuest(int &client, bool &is_empty_msg, vector<string> &to
 
     else if (command == "register")
     {
+        string username = tokens[1];
+        string password = tokens[2];
+        User user = registerUser(username, password, true);
+        if (user.getUsername().empty()){
+            cout << "User registration failed \n";
+        }
+        else{
+            cout << "User registered \n";
+        }
         // handle user regsitration
     }
     else
     {
         string message = "\tYou are logged in as a guest.\n"
-                         "\tClient can only register new user "
+                         "\tClient can only register new user\n"
                          "\tCommand: register username password\n";
+                         "<guest: >";
 
         sendMsg(client, message);
     }
@@ -615,6 +625,44 @@ User GameServer::registerUser(string username, string password, bool isGuest)
         cout << "Only guest can register as new user" << endl;
         return usr;
     }
+    std::string filename = "users/" + username + ".txt";
+    std::ofstream userFile(filename);
+    if (!userFile.is_open()) {
+        std::cerr << "Error creating user file." << std::endl;
+        return usr;
+    }
+
+    // Write user data to file
+    userFile << "username: " << username << "\n";
+    userFile << "password: " << password << "\n";
+    userFile << "isPlaying: false\n";
+    userFile << "wins: 0\n";
+    userFile << "loss: 0\n";
+    userFile << "draw: 0\n";
+    userFile << "message: {}\n";
+    userFile << "mail: {}\n";
+    userFile << "quietMode: false\n";
+    userFile << "blockList: {}\n";
+    userFile << "rank: 0\n";
+    userFile << "points: 0\n";
+    userFile << "totalGames: 0\n";
+    userFile.close();
+
+    usr.setUsername(username);
+    usr.setPassword(password);
+    usr.setIsPlaying(false);
+    usr.setWins(0);
+    usr.setDraw(0);
+    usr.setLoss(0);
+    usr.setRank(0);
+    usr.setPoints(0);
+    usr.setPoints(0);
+    usr.setMail({});
+    usr.setMessages({});
+    usr.setBlockList({});
+    usr.setQuietMode(false);
+
+    allUsers.push_back(usr);
     return usr;
     // return usr.registerUser(username, password);
 }

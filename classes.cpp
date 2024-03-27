@@ -69,10 +69,10 @@ std::vector<Message> User::parseMessage(const std::string& messageStr) {
 
     // Remove the outer curly braces
     std::string messagesContent = messageStr.substr(1, messageStr.size() - 2);
-    cout << "message content is " << messageStr.substr(1, messageStr.size() - 2) << endl;
+    // cout << "message content is " << messageStr.substr(1, messageStr.size() - 2) << endl;
     messagesContent = messagesContent.substr(1);
     messagesContent.pop_back();
-    cout << "updated message" << messagesContent;
+    // cout << "updated message" << messagesContent;
 
 
 
@@ -93,17 +93,17 @@ std::vector<Message> User::parseMessage(const std::string& messageStr) {
 
         // Remove the outer double quotes
         std::string msg = item.substr(1, item.size() - 2);
-        cout << "msg is " << msg << endl;
+        // cout << "msg is " << msg << endl;
         parts.push_back(msg);
 
 
     }
         if (parts.size() == 4) {
             // Create a Message object and add it to the vector
-            cout << "component 1" << parts[0] << endl; 
-            cout << "component 2" << parts[1] << endl; 
-            cout << "component 3" << parts[2] << endl; 
-            cout << "component 4" << parts[3] << endl; 
+            // cout << "component 1" << parts[0] << endl; 
+            // cout << "component 2" << parts[1] << endl; 
+            // cout << "component 3" << parts[2] << endl; 
+            // cout << "component 4" << parts[3] << endl; 
             messages.push_back(Message(parts[0], parts[3], parts[2], parts[1]));
         }
     return messages;
