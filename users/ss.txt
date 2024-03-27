@@ -1,0 +1,13 @@
+username: ss
+password: ss
+isPlaying: false
+wins: 0
+loss: 0
+draw: 0
+message: {}
+mail: {}
+quietMode: false
+blockList: {}
+rank: 0
+points: 0
+totalGames: 0

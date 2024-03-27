@@ -15,6 +15,8 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <signal.h>
+#include <format>
+
 #include <errno.h>
 
 #include "json.hpp"
@@ -43,7 +45,9 @@ private:
     fd_set ready_sockets;
 
     int max_allowed_connections = 4;
-    
+
+
+    unordered_map<string, User> allUsersInfo;
     unordered_set<int> active_connections;
     unordered_set<string> all_users;
     unordered_set<int> active_guests;
@@ -76,6 +80,7 @@ public:
     void setupServer();
 
     void handleConnections();
+
     
     void handleLogin(int &client, bool &is_empty_msg, vector<string> &tokens, string &command, string &received_data);
 

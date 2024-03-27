@@ -3,11 +3,9 @@
 #include <vector>
 #include <string>
 
-vector<User> allUsers = {};
-
 // GameServer
 
-GameServer::GameServer(int port=50001)
+GameServer::GameServer(int port = 50001)
 {
     server_port = port;
     init_message = R"(      
@@ -63,20 +61,18 @@ username (guest):)";
             deletemail <msg_num> , mail <id> <title>, info <msg>, passwd <new>, exit
             quit, help, ?
     */
-}
 
-
-void initializeUser() {
-    // Clear existing user data if needed
-    allUsers.clear();
-    cout << "initializing users" << endl;
+    allUsersInfo.clear();
+    cout << "initializing users....." << endl;
 
     std::string usersFolder = "users";
 
     // Iterate through files in the "users" directory
-    for (const auto& entry : std::filesystem::directory_iterator(usersFolder)) {
+    for (const auto &entry : std::filesystem::directory_iterator(usersFolder))
+    {
         // Check if the entry is a regular file
-        if (entry.is_regular_file()) {
+        if (entry.is_regular_file())
+        {
             // cout << "is a regular file" << endl;
             std::string filename = entry.path().filename().string();
             // Extract username from filename
@@ -84,16 +80,19 @@ void initializeUser() {
 
             // Open the user file
             std::ifstream userFile(entry.path());
-            if (userFile.is_open()) {
+            if (userFile.is_open())
+            {
                 // Read user data from file
                 std::string line;
                 User user;
 
                 // Parse user data from each line
-                while (std::getline(userFile, line)) {
+                while (std::getline(userFile, line))
+                {
                     std::istringstream iss(line);
                     std::string key, value;
-                    if (std::getline(iss, key, ':') && std::getline(iss, value)) {
+                    if (std::getline(iss, key, ':') && std::getline(iss, value))
+                    {
                         // Trim whitespace from key and value
                         key.erase(0, key.find_first_not_of(" \t\r\n"));
                         key.erase(key.find_last_not_of(" \t\r\n") + 1);
@@ -101,35 +100,58 @@ void initializeUser() {
                         value.erase(value.find_last_not_of(" \t\r\n") + 1);
 
                         // Parse specific fields
-                        if (key == "password") {
+                        if (key == "password")
+                        {
                             user.setPassword(value);
-                        } else if (key == "wins") {
+                        }
+                        else if (key == "wins")
+                        {
                             user.setWins(std::stoi(value));
-                        } else if (key == "loss") {
+                        }
+                        else if (key == "loss")
+                        {
                             user.setLoss(std::stoi(value));
-                        } else if (key == "draw") {
+                        }
+                        else if (key == "draw")
+                        {
                             user.setDraw(std::stoi(value));
-                        } else if (key == "isPlaying") {
+                        }
+                        else if (key == "isPlaying")
+                        {
                             user.setIsPlaying(value == "true");
-                        } else if (key == "messages") {
+                        }
+                        else if (key == "messages")
+                        {
                             // Parse messages
                             std::vector<Message> messages = user.parseMessage(value);
                             user.setMessages(messages);
-                        } else if (key == "mail") {
+                        }
+                        else if (key == "mail")
+                        {
                             // Parse mail
                             std::vector<std::string> mail = user.parseMail(value);
                             user.setMail(mail);
-                        } else if (key == "quietMode") {
+                        }
+                        else if (key == "quietMode")
+                        {
                             user.setQuietMode(value == "true");
-                        } else if (key == "blockList") {
+                        }
+                        else if (key == "blockList")
+                        {
                             // Parse blockList
                             std::vector<std::string> blockList = user.parseBlockList(value);
                             user.setBlockList(blockList);
-                        } else if (key == "rank") {
+                        }
+                        else if (key == "rank")
+                        {
                             user.setRank(std::stoi(value));
-                        } else if (key == "points") {
+                        }
+                        else if (key == "points")
+                        {
                             user.setPoints(std::stoi(value));
-                        } else if (key == "totalGames") {
+                        }
+                        else if (key == "totalGames")
+                        {
                             user.setTotalGames(std::stoi(value));
                         }
                         // Add more fields as needed
@@ -139,54 +161,58 @@ void initializeUser() {
                 userFile.close();
 
                 // Add user to allUsers
-                allUsers.push_back(user);
-            } else {
+                allUsersInfo[username] = user;
+                all_users.insert(username);
+            }
+            else
+            {
                 std::cerr << "Failed to open user file: " << filename << std::endl;
             }
         }
 
         // Print out all users
-    cout << "Printing all users:" << endl;
-    for (const auto& user : allUsers) {
-        cout << "Username: " << user.getUsername() << endl;
-        // cout << "Password: " << user.getPassword() << endl;
-        // cout << "win: " << user.getWins() << endl;
-        // cout << "loss: " << user.getLoss() << endl;
-        // cout << "draw: " << user.getDraw() << endl;
-        // cout << "points: " << user.getPoints() << endl;
-        // cout << "rank: " << user.getRank() << endl;
-        // cout << "Messages:" << endl;
-        const std::vector<Message>& messages = user.getMessages();
-        // for (const auto& message : messages) {
-        //     cout << "From: " << message.getFrom() << endl;
-        //     cout << "Time: " << message.getTime() << endl;
-        //     cout << "Status: " << message.getStatus() << endl;
-        //     cout << "Message: " << message.getMsg() << endl;
-        //     cout << endl;
-        // }
+        cout << "Printing all users:" << endl;
+        for (const auto &usr : allUsersInfo)
+        {
+            User user = usr.second;
+            cout << "Username: " << user.getUsername() << endl;
+            // cout << "Password: " << user.getPassword() << endl;
+            // cout << "win: " << user.getWins() << endl;
+            // cout << "loss: " << user.getLoss() << endl;
+            // cout << "draw: " << user.getDraw() << endl;
+            // cout << "points: " << user.getPoints() << endl;
+            // cout << "rank: " << user.getRank() << endl;
+            // cout << "Messages:" << endl;
+            const std::vector<Message> &messages = user.getMessages();
+            // for (const auto& message : messages) {
+            //     cout << "From: " << message.getFrom() << endl;
+            //     cout << "Time: " << message.getTime() << endl;
+            //     cout << "Status: " << message.getStatus() << endl;
+            //     cout << "Message: " << message.getMsg() << endl;
+            //     cout << endl;
+            // }
 
-        // cout << "mail" << endl;
-        // for (const auto&mail: user.getMail()) {
-        //     cout << mail << endl;
-        // }
-        // cout << "block list" << endl;
-        // for (const auto&block: user.getBlockList()) {
-        //     cout << block << endl;
-        // }
-        // cout << "quietMode: " << user.getQuietMode() << endl;
-        // cout << "isPLaying: " << user.getIsPlaying() << endl;
-        // cout << "totalGames: " << user.getTotalGames() << endl;
-        // Print other user information as needed
-    }
+            // cout << "mail" << endl;
+            // for (const auto&mail: user.getMail()) {
+            //     cout << mail << endl;
+            // }
+            // cout << "block list" << endl;
+            // for (const auto&block: user.getBlockList()) {
+            //     cout << block << endl;
+            // }
+            // cout << "quietMode: " << user.getQuietMode() << endl;
+            // cout << "isPLaying: " << user.getIsPlaying() << endl;
+            // cout << "totalGames: " << user.getTotalGames() << endl;
+            // Print other user information as needed
+        }
     }
 }
+
 
 void GameServer::start()
 {
     setupServer();
-    cout << "server setup complete...\n"
-         << endl;
-    initializeUser();
+    cout << "server setup complete...\n"<< endl;
     handleConnections();
 }
 
@@ -227,7 +253,7 @@ void GameServer::handleConnections()
 {
     while (true)
     {
-        cout<<"again in the server\n";
+        cout << "again in the server\n";
         // select is destructive, so make a copy
         ready_sockets = all_sockets;
         int socket_count;
@@ -324,7 +350,7 @@ bool GameServer::handleClient(int client) // For handling different client input
     }
 
     string command = tokens[0];
-    cout << "Command is: " << command<<endl;
+    cout << "Command is: " << command << endl;
     cout << "=============== " << endl;
 
     bool is_empty_msg = (received_data[0] == '\n' || received_data[0] == '\r');
@@ -332,7 +358,7 @@ bool GameServer::handleClient(int client) // For handling different client input
     // Client tries to log in
     if (not_logged_in.find(client) != not_logged_in.end())
     {
-        cout<<"In login"<<endl;
+        cout << "In login" << endl;
         handleLogin(client, is_empty_msg, tokens, command, received_data);
     }
     // The client is guest
@@ -353,7 +379,13 @@ bool GameServer::handleClient(int client) // For handling different client input
 void GameServer::handleLogin(int &client, bool &is_empty_msg, vector<string> &tokens,
                              string &command, string &received_data)
 {
+    cout<<"Handle login called...\n";
     string user = not_logged_in[client];
+    cout << "recieved data is " << received_data << endl;
+
+    for(auto it:all_users){
+            cout<<it<<endl;
+        }
     // if empty, then expect username else add client as guest
     if (user.empty())
     {
@@ -364,6 +396,7 @@ void GameServer::handleLogin(int &client, bool &is_empty_msg, vector<string> &to
             active_guests.insert(client);
             handleEmptyMsg(client);
         }
+        
         else if ((all_users.find(command) != all_users.end()) && (tokens.size() == 1))
         {
             not_logged_in[client] = command;
@@ -378,24 +411,25 @@ void GameServer::handleLogin(int &client, bool &is_empty_msg, vector<string> &to
     }
     else
     {
+        string usr_name = not_logged_in[client];
         not_logged_in.erase(client);
-        string saved_password = "rama";
-        if (saved_password == received_data)
+        User usr = allUsersInfo[usr_name];
+        cout << "User password stored is " << usr.getPassword() << endl;
+        if (trim(usr.getPassword()) == trim(received_data))
         {
             user_socket_map[user] = client;
             socket_user_map[client] = user;
-            string msg = "Successfully logged in\n";
-
-            // Get user
-            // Find the number of unread messages
-            // send to client.
+            std::ostringstream oss;
+            oss << "Successfully logged in..\n <" << usr_name << ">:";
+            std::string msg = oss.str();
+            sendMsg(client, msg);
+                          
         }
         else
         {
             string msg = "Password does not match...";
             handleClientExit(client, msg);
         }
-   
     }
 }
 
@@ -417,12 +451,18 @@ void GameServer::handleGuest(int &client, bool &is_empty_msg, vector<string> &to
         string username = tokens[1];
         string password = tokens[2];
         User user = registerUser(username, password, true);
-        if (user.getUsername().empty()){
+        string msg = "";
+        if (user.getUsername().empty())
+        {
             cout << "User registration failed \n";
+            msg = "\tUser registration failed \n";
         }
-        else{
+        else
+        {
             cout << "User registered \n";
+            msg = "User registered \n";
         }
+        sendMsg(client, msg);
         // handle user regsitration
     }
     else
@@ -430,7 +470,6 @@ void GameServer::handleGuest(int &client, bool &is_empty_msg, vector<string> &to
         string message = "\tYou are logged in as a guest.\n"
                          "\tClient can only register new user\n"
                          "\tCommand: register username password\n";
-                         "<guest: >";
 
         sendMsg(client, message);
     }
@@ -514,9 +553,6 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
     else if (command == "?")
     {
     }
-    else if (command == "register")
-    {
-    }
     else
     {
         string msg = "Command not suppported!!";
@@ -535,8 +571,7 @@ void GameServer::handleEmptyMsg(int &client)
     if (it != active_guests.end())
     {
         string msg = "\tYou are logged in as a guest.\n"
-                     "\tThe only command that you can use is 'register username password' and 'quit/exit'.\n"
-                     "<guest: >";
+                     "\tThe only command that you can use is 'register username password' and 'quit/exit'.\n";
         manual_msg = string(manual_msg) + msg;
     }
     else
@@ -560,27 +595,29 @@ void GameServer::handleClientExit(int &client, string &msg)
 
     active_connections.erase(client);
 
-    if (active_guests.find(client) != active_guests.end()){
+    if (active_guests.find(client) != active_guests.end())
+    {
         active_guests.erase(client);
     }
 
-    else if(not_logged_in.find(client) != not_logged_in.end()){
+    else if (not_logged_in.find(client) != not_logged_in.end())
+    {
         not_logged_in.erase(client);
     }
-
-    else{
-
+    // User shoud be logged user
+    else
+    {
+        string user = socket_user_map[client];
+        socket_user_map.erase(client);
+        user_socket_map.erase(user);
     }
-
-
 
     close(client);
     // Clear it from the socket
     FD_CLR(client, &all_sockets);
     cout << "Closed, AC size: " << active_connections.size() << endl;
     maxfd = getMaxSet(active_connections);
-    cout << "successfully exited: "<< endl;
-
+    cout << "successfully exited: " << endl;
 }
 
 void GameServer::handleConnectionError(const char *msg)
@@ -591,6 +628,10 @@ void GameServer::handleConnectionError(const char *msg)
 
 void GameServer::sendMsg(int &client, string &msg)
 {
+    if (active_guests.find(client) != active_guests.end())
+    {
+        msg += "<guest: >";
+    }
     if (send(client, msg.c_str(), msg.length(), 0) < 0)
     {
         std::cerr << "Send failed" << std::endl;
@@ -627,11 +668,11 @@ User GameServer::registerUser(string username, string password, bool isGuest)
     }
     std::string filename = "users/" + username + ".txt";
     std::ofstream userFile(filename);
-    if (!userFile.is_open()) {
+    if (!userFile.is_open())
+    {
         std::cerr << "Error creating user file." << std::endl;
         return usr;
     }
-
     // Write user data to file
     userFile << "username: " << username << "\n";
     userFile << "password: " << password << "\n";
@@ -661,13 +702,10 @@ User GameServer::registerUser(string username, string password, bool isGuest)
     usr.setMessages({});
     usr.setBlockList({});
     usr.setQuietMode(false);
-
-    allUsers.push_back(usr);
+    all_users.insert(username);
+    allUsersInfo[username] = usr;
     return usr;
     // return usr.registerUser(username, password);
 }
-
-
-
 
 bool GameServer::loginUser(string username, string password) {}
