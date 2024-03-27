@@ -47,9 +47,9 @@ private:
     unordered_set<int> active_connections;
     unordered_set<string> all_users;
     unordered_set<int> active_guests;
-    unordered_map<int, User> socket_user_map; //{4: User(), 5: 'guest'}
-    unordered_map<int, string> not_logged_in; //{4: 'user', 5: 'guest'}
+    unordered_map<int, string> socket_user_map; //{4: User()}
     unordered_map<string, int> user_socket_map; //{'leo': 4} do not save guest here
+    unordered_map<int, string> not_logged_in; //{4: 'user', 5: 'guest'}
 
 
     //help
@@ -79,9 +79,9 @@ public:
     
     void handleLogin(int &client, bool &is_empty_msg, vector<string> &tokens, string &command, string &received_data);
 
-    bool handleGuest(int &client, bool &is_empty_msg, vector<string> &tokens, string &command, string &received_data);
+    void handleGuest(int &client, bool &is_empty_msg, vector<string> &tokens, string &command, string &received_data);
     
-    bool handleRegisteredUser(int &client, bool &is_empty_msg, vector<string> &tokens, string &command, string &received_data);
+    void handleRegisteredUser(int &client, bool &is_empty_msg, vector<string> &tokens, string &command, string &received_data);
 
     bool acceptNewConnection();
 
@@ -91,7 +91,7 @@ public:
 
     //Handling different messsages
 
-    void handleEmptyMsg(int &client, string &msg, vector<string> &tokens);
+    void handleEmptyMsg(int &client);
     
     void handleClientExit(int &client, string &msg);
 

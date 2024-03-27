@@ -338,12 +338,12 @@ bool GameServer::handleClient(int client) // For handling different client input
     // The client is guest
     else if (active_guests.find(client) != active_guests.end())
     {
-        bool res = handleGuest(client, is_empty_msg, tokens, command, received_data);
+        handleGuest(client, is_empty_msg, tokens, command, received_data);
     }
     // The client is registered user
     else
     {
-        bool res = handleRegisteredUser(client, is_empty_msg, tokens, command, received_data);
+        handleRegisteredUser(client, is_empty_msg, tokens, command, received_data);
     }
 
     // handle the cases where the client is the registererd user
@@ -362,14 +362,16 @@ void GameServer::handleLogin(int &client, bool &is_empty_msg, vector<string> &to
         {
             not_logged_in.erase(client);
             active_guests.insert(client);
+            handleEmptyMsg(client);
         }
         else if ((all_users.find(command) != all_users.end()) && (tokens.size() == 1))
         {
             not_logged_in[client] = command;
+            string msg = "Password: ";
+            sendMsg(client, msg);
         }
         else
         {
-            not_logged_in.erase(client);
             string msg = "Username not found";
             handleClientExit(client, msg);
         }
@@ -381,6 +383,12 @@ void GameServer::handleLogin(int &client, bool &is_empty_msg, vector<string> &to
         if (saved_password == received_data)
         {
             user_socket_map[user] = client;
+            socket_user_map[client] = user;
+            string msg = "Successfully logged in\n";
+
+            // Get user
+            // Find the number of unread messages
+            // send to client.
         }
         else
         {
@@ -391,16 +399,16 @@ void GameServer::handleLogin(int &client, bool &is_empty_msg, vector<string> &to
     }
 }
 
-bool GameServer::handleGuest(int &client, bool &is_empty_msg, vector<string> &tokens,
+void GameServer::handleGuest(int &client, bool &is_empty_msg, vector<string> &tokens,
                              string &command, string &received_data)
 {
     if (is_empty_msg)
     {
-        handleEmptyMsg(client, received_data, tokens);
+        handleEmptyMsg(client);
     }
     else if (command == "exit" || command == "quit")
     {
-        string msg = "Server closed the connection";
+        string msg = "Bye Bye...\n";
         handleClientExit(client, msg);
     }
 
@@ -418,7 +426,7 @@ bool GameServer::handleGuest(int &client, bool &is_empty_msg, vector<string> &to
     }
 }
 
-bool GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<string> &tokens,
+void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<string> &tokens,
                                       string &command, string &received_data)
 {
     if (command == "who")
@@ -505,7 +513,7 @@ bool GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
     }
 }
 
-void GameServer::handleEmptyMsg(int &client, string &msg, vector<string> &tokens)
+void GameServer::handleEmptyMsg(int &client)
 {
 
     // string user = socket_user_map[client];
@@ -541,9 +549,20 @@ void GameServer::handleClientExit(int &client, string &msg)
     }
 
     active_connections.erase(client);
-    // Remove socket from socket_user_map
 
-    // socket_user_map.erase(client);
+    if (active_guests.find(client) != active_guests.end()){
+        active_guests.erase(client);
+    }
+
+    else if(not_logged_in.find(client) != not_logged_in.end()){
+        not_logged_in.erase(client);
+    }
+
+    else{
+
+    }
+
+
 
     close(client);
     // Clear it from the socket
