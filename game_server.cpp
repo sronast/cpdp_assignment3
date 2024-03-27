@@ -175,13 +175,15 @@ bool GameServer::acceptNewConnection()
 
     // cout<<"Max fd: "<<maxfd<<endl;
     FD_SET(client_socket, &all_sockets);
-    active_connections.insert(client_socket);
+    // active_connections.insert(client_socket);
+    active_guests.insert(client_socket);
     // maxfd = max(maxfd, client_socket);
     // cout<<"client_socket: "<<client_socket<<endl;
     // cout<<"Max fd: "<<maxfd<<endl;
 
     // Try sending init message to the newly connected client
-    socket_user_map[client_socket] = "guest";
+    // socket_user_map[client_socket] = "guest";
+
     if (send(client_socket, init_message.c_str(), init_message.length(), 0) < 0)
     {
         std::cerr << "Send failed" << std::endl;
@@ -298,10 +300,14 @@ void GameServer::handleClient(int client) // For handling different client input
     else if (command == "register"){
 
     }
+    else{
+        string msg = "Command not suppported!!";
+    }
 
 }
 void GameServer::handleEmptyMsg(int &client, string &msg, vector<string> &tokens)
 {
+    
     string user = socket_user_map[client];
     string manual_msg = manual;
     if (user == "guest")
