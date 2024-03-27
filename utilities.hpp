@@ -10,6 +10,7 @@
 #include <cstdlib>
 #include <fstream>
 #include <sstream>
+#include<unordered_set>
 
 using namespace std;
 
@@ -17,5 +18,6 @@ using namespace std;
 int getRandomInt();
 vector<string> tokenize(string &command, const char &delimeter);
 string trim(const string& str);
+int getMaxSet(unordered_set<int> &mySet);
 
 #endif

@@ -14,6 +14,7 @@ int main(int argc, char* argv[]){
 
 
     GameServer gameServer(atoi(argv[1]));
+    // GameServer gameServer(50001);
     gameServer.start();
 
     // Register a new user

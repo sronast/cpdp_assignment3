@@ -7,7 +7,7 @@ vector<User> allUsers = {};
 
 // GameServer
 
-GameServer::GameServer(int port)
+GameServer::GameServer(int port=50001)
 {
     server_port = port;
     init_message = R"(      
@@ -183,11 +183,6 @@ void initializeUser() {
 
 void GameServer::start()
 {
-    // 1. Create a server socket here
-    // 2. Use select to handle multiple use cases like, accepting new connection, communication between clients
-    // 3. Load all the saved states
-    // 4.
-    // server_socket = setup_server();
     setupServer();
     cout << "server setup complete...\n"
          << endl;
@@ -223,7 +218,7 @@ void GameServer::setupServer()
     FD_ZERO(&all_sockets);
     FD_SET(server_socket, &all_sockets);
     active_connections.insert(server_socket);
-    // maxfd = server_socket;
+    maxfd = server_socket;
     // cout << "Server socket: " << server_socket << endl;
     // cout << "Server started at IP: " << inet_ntoa(server_address.sin_addr) << " Port: " << htons(server_address.sin_port) << endl;
 }
@@ -232,6 +227,7 @@ void GameServer::handleConnections()
 {
     while (true)
     {
+        cout<<"again in the server\n";
         // select is destructive, so make a copy
         ready_sockets = all_sockets;
         int socket_count;
@@ -239,13 +235,10 @@ void GameServer::handleConnections()
         {
             handleConnectionError("Select error!!");
         }
-        // select(maxfd+1, &ready_sockets, NULL, NULL, NULL);
-        // cout << "now handling connection, counts: " << active_connections.size()<<endl;
-        // Go through all fds,
 
         // Make a temporary vector for iterating over the current fds
         const vector<int> temp_fds = {active_connections.begin(), active_connections.end()};
-        cout<<"set size: "<<active_connections.size()<<endl;
+        cout << "set size: " << active_connections.size() << endl;
         for (int it : temp_fds)
         {
             // Check which socket is ready
@@ -297,26 +290,22 @@ bool GameServer::acceptNewConnection()
 
     // cout<<"Max fd: "<<maxfd<<endl;
     FD_SET(client_socket, &all_sockets);
-    // active_connections.insert(client_socket);
-    active_guests.insert(client_socket);
-    // maxfd = max(maxfd, client_socket);
+    active_connections.insert(client_socket);
+    maxfd = max(maxfd, client_socket);
+    not_logged_in[client_socket] = "";
     // cout<<"client_socket: "<<client_socket<<endl;
     // cout<<"Max fd: "<<maxfd<<endl;
 
     // Try sending init message to the newly connected client
     // socket_user_map[client_socket] = "guest";
 
-    if (send(client_socket, init_message.c_str(), init_message.length(), 0) < 0)
-    {
-        std::cerr << "Send failed" << std::endl;
-    }
-
+    sendMsg(client_socket, init_message);
     return true;
     // 1. Check if maximum number of connections is already active
     // 2. Handle connection request
 }
 
-void GameServer::handleClient(int client) // For handling different client inputs
+bool GameServer::handleClient(int client) // For handling different client inputs
 {
     cout << "input from the client: " << client << endl;
 
@@ -328,7 +317,6 @@ void GameServer::handleClient(int client) // For handling different client input
     // Convert buffer to string
     string received_data(buffer, msg_size);
 
-
     vector<string> tokens = tokenize(received_data, ' ');
     for (string t : tokens)
     {
@@ -336,139 +324,260 @@ void GameServer::handleClient(int client) // For handling different client input
     }
 
     string command = tokens[0];
-    cout << "Command is\n " << command;
+    cout << "Command is: " << command<<endl;
     cout << "=============== " << endl;
-    // cout << "Tokens is " << tokens;
 
-    if (received_data[0] == '\n' || received_data[0] == '\r')
+    bool is_empty_msg = (received_data[0] == '\n' || received_data[0] == '\r');
+
+    // Client tries to log in
+    if (not_logged_in.find(client) != not_logged_in.end())
+    {
+        cout<<"In login"<<endl;
+        handleLogin(client, is_empty_msg, tokens, command, received_data);
+    }
+    // The client is guest
+    else if (active_guests.find(client) != active_guests.end())
+    {
+        bool res = handleGuest(client, is_empty_msg, tokens, command, received_data);
+    }
+    // The client is registered user
+    else
+    {
+        bool res = handleRegisteredUser(client, is_empty_msg, tokens, command, received_data);
+    }
+
+    // handle the cases where the client is the registererd user
+    return true;
+}
+
+void GameServer::handleLogin(int &client, bool &is_empty_msg, vector<string> &tokens,
+                             string &command, string &received_data)
+{
+    string user = not_logged_in[client];
+    // if empty, then expect username else add client as guest
+    if (user.empty())
+    {
+
+        if (is_empty_msg)
+        {
+            not_logged_in.erase(client);
+            active_guests.insert(client);
+        }
+        else if ((all_users.find(command) != all_users.end()) && (tokens.size() == 1))
+        {
+            not_logged_in[client] = command;
+        }
+        else
+        {
+            not_logged_in.erase(client);
+            string msg = "Username not found";
+            handleClientExit(client, msg);
+        }
+    }
+    else
+    {
+        not_logged_in.erase(client);
+        string saved_password = "rama";
+        if (saved_password == received_data)
+        {
+            user_socket_map[user] = client;
+        }
+        else
+        {
+            string msg = "Password does not match...";
+            handleClientExit(client, msg);
+        }
+   
+    }
+}
+
+bool GameServer::handleGuest(int &client, bool &is_empty_msg, vector<string> &tokens,
+                             string &command, string &received_data)
+{
+    if (is_empty_msg)
     {
         handleEmptyMsg(client, received_data, tokens);
     }
-    else if(command == "exit" || command=="quit"){
-        handleExitMsg(client);
+    else if (command == "exit" || command == "quit")
+    {
+        string msg = "Server closed the connection";
+        handleClientExit(client, msg);
     }
-    else if (command == "who"){
-        
-    }
-    else if (command == "stats"){
 
+    else if (command == "register")
+    {
+        // handle user regsitration
     }
-    else if (command == "game"){
+    else
+    {
+        string message = "\tYou are logged in as a guest.\n"
+                         "\tClient can only register new user "
+                         "\tCommand: register username password\n";
 
+        sendMsg(client, message);
     }
-    else if (command == "observe"){
+}
 
+bool GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<string> &tokens,
+                                      string &command, string &received_data)
+{
+    if (command == "who")
+    {
+        // list all online users
+        string allOnlineUsers = getOnlineUsers();
+        sendMsg(client, allOnlineUsers);
     }
-    else if (command == "unobserve"){
-
+    else if (command == "stats")
+    {
     }
-    else if (command == "match"){
-
+    else if (command == "game")
+    {
     }
-    else if (command == "resign"){
-
+    else if (command == "observe")
+    {
     }
-    else if (command == "refresh"){
-
+    else if (command == "unobserve")
+    {
     }
-    else if (command == "shout"){
-
+    else if (command == "match")
+    {
     }
-    else if (command == "tell"){
-
+    else if (command == "resign")
+    {
     }
-    else if (command == "kibitz"){
-
+    else if (command == "refresh")
+    {
     }
-    else if (command == "\""){
-
+    else if (command == "shout")
+    {
     }
-    else if (command == "quiet"){
-
+    else if (command == "tell")
+    {
     }
-    else if (command == "nonquiet"){
-
+    else if (command == "kibitz")
+    {
     }
-    else if (command == "block"){
-
+    else if (command == "\"")
+    {
     }
-    else if (command == "unblock"){
-
+    else if (command == "quiet")
+    {
     }
-    else if (command == "listmail"){
-
+    else if (command == "nonquiet")
+    {
     }
-    else if (command == "readmail"){
-
+    else if (command == "block")
+    {
     }
-    else if (command == "deletemail"){
-
+    else if (command == "unblock")
+    {
     }
-    else if (command == "mail"){
-
+    else if (command == "listmail")
+    {
     }
-    else if (command == "info"){
-
+    else if (command == "readmail")
+    {
     }
-    else if (command == "passwd"){
-
+    else if (command == "deletemail")
+    {
     }
-    else if (command == "help"){
-
+    else if (command == "mail")
+    {
     }
-    else if (command == "?"){
-
+    else if (command == "info")
+    {
     }
-    else if (command == "register"){
-
+    else if (command == "passwd")
+    {
     }
-    else{
+    else if (command == "help")
+    {
+    }
+    else if (command == "?")
+    {
+    }
+    else if (command == "register")
+    {
+    }
+    else
+    {
         string msg = "Command not suppported!!";
     }
-
 }
+
 void GameServer::handleEmptyMsg(int &client, string &msg, vector<string> &tokens)
 {
-    
-    string user = socket_user_map[client];
+
+    // string user = socket_user_map[client];
+    auto it = active_guests.find(client);
+
     string manual_msg = manual;
-    if (user == "guest")
+
+    // if the request is from guest
+    if (it != active_guests.end())
     {
         string msg = "\tYou are logged in as a guest.\n"
-        "\tThe only command that you can use is 'register username password' and 'quit/exit'.\n"
-        "<guest: >";
+                     "\tThe only command that you can use is 'register username password' and 'quit/exit'.\n"
+                     "<guest: >";
         manual_msg = string(manual_msg) + msg;
     }
-
-    if (send(client, manual_msg.c_str(), manual_msg.length(), 0) < 0)
+    else
     {
-        std::cerr << "Send failed" << std::endl;
+        // if not
     }
-    cout << "sent.." << endl;
+
+    sendMsg(client, manual_msg);
 }
 
-void GameServer::handleExitMsg(int &client){
-    string user = socket_user_map[client];
+void GameServer::handleClientExit(int &client, string &msg)
+{
+    // string user = socket_user_map[client];
 
-    //Remove socket from active connections
-    active_connections.erase(client);
-    //Remove socket from socket_user_map
-    socket_user_map.erase(client);
-    //If user is registered, remove from user_socket_map.
-    if(user!="guest"){
-        user_socket_map.erase(user);
+    // Remove socket from active connections
+
+    if (!msg.empty())
+    {
+        sendMsg(client, msg);
     }
-    //Close the socket
+
+    active_connections.erase(client);
+    // Remove socket from socket_user_map
+
+    // socket_user_map.erase(client);
+
     close(client);
-    // Clear it from the socket 
+    // Clear it from the socket
     FD_CLR(client, &all_sockets);
-    cout<<"Closed, AC size: "<<active_connections.size()<<endl;
+    cout << "Closed, AC size: " << active_connections.size() << endl;
+    maxfd = getMaxSet(active_connections);
+    cout << "successfully exited: "<< endl;
+
 }
 
 void GameServer::handleConnectionError(const char *msg)
 {
     perror(msg);
     exit(EXIT_FAILURE);
+}
+
+void GameServer::sendMsg(int &client, string &msg)
+{
+    if (send(client, msg.c_str(), msg.length(), 0) < 0)
+    {
+        std::cerr << "Send failed" << std::endl;
+    }
+    cout << "sent.." << endl;
+}
+
+string GameServer::getOnlineUsers()
+{
+    string res = "";
+    for (const auto &pair : user_socket_map)
+    {
+        std::cout << "Key: " << pair.first << std::endl;
+        res = res + pair.first + " ";
+    }
+    return res;
 }
 
 vector<string> GameServer::displayAllUsers() {} // who

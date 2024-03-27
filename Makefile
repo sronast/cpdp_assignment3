@@ -1,4 +1,4 @@
-CFLAGS =  -std=c++20 -pedantic #this is comment
+CFLAGS = -g -std=c++20 -pedantic #this is comment
 CC = g++
 
 server: main.o game_server.o game.o classes.o utilities.o

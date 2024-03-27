@@ -16,6 +16,16 @@ string trim(const string &str)
 
     return str.substr(start, end - start + 1);
 }
+int getMaxSet(unordered_set<int> &mySet){
+    int maxElement = *(mySet.begin()); // Initialize maxElement with the first element
+
+    for (int elem : mySet) {
+        if (elem > maxElement) {
+            maxElement = elem;
+        }
+    }
+    return maxElement;
+}
 
 vector<string> tokenize(string &data, const char &delimeter)
 {
