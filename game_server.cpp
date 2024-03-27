@@ -1,4 +1,9 @@
 #include "game_server.hpp"
+#include "classes.hpp"
+#include <vector>
+#include <string>
+
+vector<User> allUsers = {};
 
 // GameServer
 
@@ -60,6 +65,122 @@ username (guest):)";
     */
 }
 
+
+void initializeUser() {
+    // Clear existing user data if needed
+    allUsers.clear();
+    cout << "initializing users" << endl;
+
+    std::string usersFolder = "users";
+
+    // Iterate through files in the "users" directory
+    for (const auto& entry : std::filesystem::directory_iterator(usersFolder)) {
+        // Check if the entry is a regular file
+        if (entry.is_regular_file()) {
+            cout << "is a regular file" << endl;
+            std::string filename = entry.path().filename().string();
+            // Extract username from filename
+            std::string username = filename.substr(0, filename.find(".txt"));
+
+            // Open the user file
+            std::ifstream userFile(entry.path());
+            if (userFile.is_open()) {
+                // Read user data from file
+                std::string line;
+                User user;
+
+                // Parse user data from each line
+                while (std::getline(userFile, line)) {
+                    std::istringstream iss(line);
+                    std::string key, value;
+                    if (std::getline(iss, key, ':') && std::getline(iss, value)) {
+                        // Trim whitespace from key and value
+                        key.erase(0, key.find_first_not_of(" \t\r\n"));
+                        key.erase(key.find_last_not_of(" \t\r\n") + 1);
+                        value.erase(0, value.find_first_not_of(" \t\r\n"));
+                        value.erase(value.find_last_not_of(" \t\r\n") + 1);
+
+                        // Parse specific fields
+                        if (key == "password") {
+                            user.setPassword(value);
+                        } else if (key == "wins") {
+                            user.setWins(std::stoi(value));
+                        } else if (key == "loss") {
+                            user.setLoss(std::stoi(value));
+                        } else if (key == "draw") {
+                            user.setDraw(std::stoi(value));
+                        } else if (key == "isPlaying") {
+                            user.setIsPlaying(value == "true");
+                        } else if (key == "messages") {
+                            // Parse messages
+                            std::vector<Message> messages = user.parseMessage(value);
+                            user.setMessages(messages);
+                        } else if (key == "mail") {
+                            // Parse mail
+                            std::vector<std::string> mail = user.parseMail(value);
+                            user.setMail(mail);
+                        } else if (key == "quietMode") {
+                            user.setQuietMode(value == "true");
+                        } else if (key == "blockList") {
+                            // Parse blockList
+                            std::vector<std::string> blockList = user.parseBlockList(value);
+                            user.setBlockList(blockList);
+                        } else if (key == "rank") {
+                            user.setRank(std::stoi(value));
+                        } else if (key == "points") {
+                            user.setPoints(std::stoi(value));
+                        } else if (key == "totalGames") {
+                            user.setTotalGames(std::stoi(value));
+                        }
+                        // Add more fields as needed
+                    }
+                }
+                user.setUsername(username);
+                userFile.close();
+
+                // Add user to allUsers
+                allUsers.push_back(user);
+            } else {
+                std::cerr << "Failed to open user file: " << filename << std::endl;
+            }
+        }
+
+        // Print out all users
+    cout << "Printing all users:" << endl;
+    for (const auto& user : allUsers) {
+        cout << "Username: " << user.getUsername() << endl;
+        cout << "Password: " << user.getPassword() << endl;
+        cout << "win: " << user.getWins() << endl;
+        cout << "loss: " << user.getLoss() << endl;
+        cout << "draw: " << user.getDraw() << endl;
+        cout << "points: " << user.getPoints() << endl;
+        cout << "rank: " << user.getRank() << endl;
+        cout << "Messages:" << endl;
+        const std::vector<Message>& messages = user.getMessages();
+        for (const auto& message : messages) {
+            cout << "From: " << message.getFrom() << endl;
+            cout << "Time: " << message.getTime() << endl;
+            cout << "Status: " << message.getStatus() << endl;
+            cout << "Message: " << message.getMsg() << endl;
+            cout << endl;
+        }
+
+        cout << "mail" << endl;
+        for (const auto&mail: user.getMail()) {
+            cout << mail << endl;
+        }
+        cout << "block list" << endl;
+        for (const auto&block: user.getBlockList()) {
+            cout << block << endl;
+        }
+        cout << "quietMode: " << user.getQuietMode() << endl;
+        cout << "isPLaying: " << user.getIsPlaying() << endl;
+        cout << "totalGames: " << user.getTotalGames() << endl;
+        // Print other user information as needed
+    }
+    }
+}
+
 void GameServer::start()
 {
     // 1. Create a server socket here
@@ -70,6 +191,7 @@ void GameServer::start()
     setupServer();
     cout << "server setup complete...\n"
          << endl;
+    initializeUser();
     handleConnections();
 }
 
@@ -365,7 +487,11 @@ User GameServer::registerUser(string username, string password, bool isGuest)
         cout << "Only guest can register as new user" << endl;
         return usr;
     }
-    return usr.registerUser(username, password);
+    return usr;
+    // return usr.registerUser(username, password);
 }
+
+
+
 
 bool GameServer::loginUser(string username, string password) {}

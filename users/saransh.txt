@@ -1,0 +1,13 @@
+username: saransh
+password: 123
+wins: 1
+loss: 1
+draw: 1
+isPlaying: false
+messages: {{"ronast", "12:15am","unread", "hello"}}
+mail: {{"ronast", "12:15am","unread", "hello"}}
+quietMode: false 
+blockList: {"prabin", "wagish"}
+rank: 2
+points: 4
+totalGames: 3
