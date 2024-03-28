@@ -1,35 +1,49 @@
 #include "game.hpp"
+#include "utilities.hpp"
 
-TicTacToe::TicTacToe()
+TicTacToe::TicTacToe(){}
+TicTacToe::TicTacToe(string usr1, string usr2)
 {
     resetBoard();
+    user1 = usr1;
+    user2 = usr2;
+    next_move = usr1;
+    id = generateRandomNumber();
 }
 
 void TicTacToe::resetBoard()
 {
-    board = {{' ', ' ', ' '}, {' ', ' ', ' '}, {' ', ' ', ' '}};
+    board = {" ", " ", " ", " ", " ", " ", " ", " ", " "};
 }
-
-void TicTacToe::displayBoard() const
+std::string TicTacToe::displayBoard() const
 {
-    std::cout << "  A   B   C\n";
-    for (int i = 0; i < boardSize; ++i)
-    {
-        std::cout << i + 1 << " ";
-        for (int j = 0; j < boardSize; ++j)
-        {
-            std::cout << board[i][j];
-            if (j < boardSize - 1)
-            {
-                std::cout << " | ";
-            }
-        }
-        std::cout << "\n";
-        if (i < boardSize - 1)
-        {
-            std::cout << " ---|---|---\n";
-        }
-    }
+    std::string boardStr;
+    boardStr += "  1   2   3\n";
+    boardStr += "A "; 
+    boardStr += board[0];
+    boardStr += " | ";
+    boardStr += board[1];
+    boardStr += " | ";
+    boardStr += board[2];
+    boardStr += "\n";
+    boardStr += " ---|---|---\n";
+    boardStr += "B "; 
+    boardStr += board[3];
+    boardStr += " | ";
+    boardStr += board[4];
+    boardStr += " | ";
+    boardStr += board[5];
+    boardStr += "\n";
+    boardStr += " ---|---|---\n";
+    boardStr += "C "; 
+    boardStr += board[6];
+    boardStr += " | ";
+    boardStr += board[7];
+    boardStr += " | ";
+    boardStr += board[8];
+    boardStr += "\n";
+    
+    return boardStr;
 }
 
 bool TicTacToe::makeMove(char column, int row, char symbol)
@@ -53,22 +67,46 @@ bool TicTacToe::makeMove(char column, int row, char symbol)
     return true;
 }
 
-bool TicTacToe::checkGameWon(char symbol) const
+bool TicTacToe::checkGameWon(string symbol)
 {
-    for (int i = 0; i < boardSize; ++i)
+    // Check rows and columns
+    for (int i = 0; i < 3; ++i)
     {
-        if ((board[i][0] == symbol && board[i][1] == symbol && board[i][2] == symbol) ||
-            (board[0][i] == symbol && board[1][i] == symbol && board[2][i] == symbol))
+        if ((board[i] == symbol && board[i + 3] == symbol && board[i + 6] == symbol) ||  // Check columns
+            (board[i * 3] == symbol && board[i * 3 + 1] == symbol && board[i * 3 + 2] == symbol))  // Check rows
         {
-            return true;
+            return true;  // Found a winning pattern
         }
     }
 
-    if ((board[0][0] == symbol && board[1][1] == symbol && board[2][2] == symbol) ||
-        (board[0][2] == symbol && board[1][1] == symbol && board[2][0] == symbol))
+    // Check diagonals
+    if ((board[0] == symbol && board[4] == symbol && board[8] == symbol) ||  // Top-left to bottom-right
+        (board[2] == symbol && board[4] == symbol && board[6] == symbol))    // Top-right to bottom-left
     {
-        return true;
+        return true;  // Found a winning pattern
     }
 
-    return false;
+    return false;  // No winning pattern found
 }
+
+// TicTacToe& TicTacToe::operator=(const TicTacToe& other)
+// {
+//     if (this != &other) // Check for self-assignment
+//     {
+//         // Copy the board
+//         for (int i = 0; i < boardSize; ++i)
+//         {
+//             for (int j = 0; j < boardSize; ++j)
+//             {
+//                 board[i][j] = other.board[i][j];
+//             }
+//         }
+
+//         // Copy other members
+//         user1 = other.user1;
+//         user2 = other.user2;
+//         next_move = other.next_move;
+//         id = other.id;
+//     }
+//     return *this;
+// }

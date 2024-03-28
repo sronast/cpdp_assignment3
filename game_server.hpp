@@ -27,6 +27,7 @@ using json = nlohmann::json;
 
 #include "utilities.hpp"
 #include "classes.hpp"
+#include "game.hpp"
 
 using namespace std;
 
@@ -40,7 +41,6 @@ private:
     int server_socket;
 
     struct sockaddr_in server_address;
-
     int maxfd;
     //current_socket: list of sockets that we are watching
     //ready sockets: for making a copy of current sockets for select()
@@ -48,7 +48,10 @@ private:
     fd_set ready_sockets;
 
     int max_allowed_connections = 4;
-
+    
+    // Game
+    unordered_map<int, TicTacToe> all_games;
+    // game
 
     unordered_map<string, User> allUsersInfo;
     unordered_set<int> active_connections;
@@ -57,6 +60,7 @@ private:
     unordered_map<int, string> socket_user_map; //{4: User()}
     unordered_map<string, int> user_socket_map; //{'leo': 4} do not save guest here
     unordered_map<int, string> not_logged_in; //{4: 'user', 5: 'guest'}
+    unordered_map<string, string> match_requests;
 
 
     //help
@@ -122,7 +126,7 @@ public:
 
     User getUser(string username);  // stats [name]
 
-    User registerUser(string username, string password, bool isGuest);
+    User& registerUser(string username, string password, bool isGuest);
 
     bool loginUser(string username, string password);
 };

@@ -52,3 +52,20 @@ bool isItemInSet(string &item, unordered_set<string> &mySet){
     }
     return false;
 }
+
+int generateRandomNumber() {
+    int min=0;
+    int max=9999;
+    // Get the current time as a timestamp
+    auto now = std::chrono::system_clock::now();
+    auto timestamp = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
+
+    // Use the timestamp as a seed for the random number engine
+    std::mt19937 gen(static_cast<unsigned>(timestamp));
+
+    // Create a uniform distribution for the range
+    std::uniform_int_distribution<int> distribution(min, max);
+
+    // Generate a random number
+    return distribution(gen);
+}

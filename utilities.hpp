@@ -11,6 +11,9 @@
 #include <fstream>
 #include <sstream>
 #include<unordered_set>
+#include <chrono>
+#include <random>
+#include <ctime>
 
 using namespace std;
 
@@ -20,5 +23,6 @@ vector<string> tokenize(string &command, const char &delimeter);
 string trim(const string& str);
 int getMaxSet(unordered_set<int> &mySet);
 bool isItemInSet(string &item, unordered_set<string> &mySet);
+int generateRandomNumber();
 
 #endif

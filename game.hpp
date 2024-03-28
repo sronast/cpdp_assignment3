@@ -6,31 +6,33 @@
 #include<map>
 #include<string>
 
+#include "utilities.hpp"
+
 using namespace std;
 
 class TicTacToe {
 public:
-    std::vector<std::vector<char>> board;
-    const int boardSize = 3;  
+    int id;
+    vector<string> board;
+    int boardSize = 3;  
     std::map<char, int> columnMap{{'A', 0}, {'B', 1}, {'C', 2}}; 
+    vector<string> move_history;
     string user1;
     string user2;
     string next_move;
 
-    TicTacToe(string usr1, string usr2){
-        user1 = usr1;
-        user2 = usr2;
-        next_move = usr1;
-        
-    };
+
+    TicTacToe();
+    TicTacToe(string usr1, string usr2);
+    // TicTacToe& TicTacToe::operator=(TicTacToe& other);
 
     void resetBoard();
 
-    void displayBoard() const;
+    string displayBoard() const;
 
     bool makeMove(char column, int row, char symbol);
 
-    bool checkGameWon(char symbol) const;
+    bool checkGameWon(string symbol);
 };
 
 #endif

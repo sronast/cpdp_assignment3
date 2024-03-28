@@ -89,8 +89,11 @@ public:
     string opponent;
     unordered_set<string> request_from;
     unordered_set<string> request_to;
+    int currentGameId;
+    string moveName = "";
     // Constructor
     User();
+    User(const User& other);
 
     // Getters and setters
     void setUsername(const std::string& username);

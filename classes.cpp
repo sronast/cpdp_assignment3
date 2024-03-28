@@ -51,7 +51,7 @@ bool User::getIsPlaying() const { return isPlaying; }
 void User::setMessages(const std::vector<Message> &messages) { this->messages = messages; }
 std::vector<Message> User::getMessages() const { return messages; }
 
-void User::setMail(const std::vector<Mail>& mail) { this->mail = mail; }
+void User::setMail(const std::vector<Mail> &mail) { this->mail = mail; }
 std::vector<Mail> User::getMail() const { return mail; }
 
 void User::setQuietMode(bool quietMode) { this->quietMode = quietMode; }
@@ -72,7 +72,8 @@ int User::getTotalGames() const { return totalGames; }
 std::vector<Message> User::parseMessage(const std::string &messageStr)
 {
     std::vector<Message> messages;
-    if (messageStr.front() != '{' || messageStr.back() != '}') {
+    if (messageStr.front() != '{' || messageStr.back() != '}')
+    {
         return messages;
     }
     std::string messagesContent = messageStr.substr(1, messageStr.size() - 2);
@@ -81,49 +82,62 @@ std::vector<Message> User::parseMessage(const std::string &messageStr)
     std::stringstream ss(messagesContent);
     std::string item;
     std::vector<std::string> parts;
-    while (std::getline(ss, item, ',')) {
+    while (std::getline(ss, item, ','))
+    {
         item.erase(0, item.find_first_not_of(" \t\n\r\f\v"));
         item.erase(item.find_last_not_of(" \t\n\r\f\v") + 1);
 
-        if (item.front() != '"' || item.back() != '"') {
+        if (item.front() != '"' || item.back() != '"')
+        {
             continue;
         }
         std::string msg = item.substr(1, item.size() - 2);
         parts.push_back(msg);
-
     }
-        if (parts.size() == 4) {
-            messages.push_back(Message(parts[0], parts[3], parts[2], parts[1]));
-        }
+    if (parts.size() == 4)
+    {
+        messages.push_back(Message(parts[0], parts[3], parts[2], parts[1]));
+    }
     return messages;
 }
 
-std::vector<Mail> User::parseMail(const std::string& mailStr){
-    std::vector<Mail> mails;
-    if (mailStr.front() != '{' || mailStr.back() != '}') {
+std::vector<Mail> User::parseMail(const std::string &mailStr)
+{
+    std::vector<Mail> mails = {};
+    if (mailStr.front() != '{' || mailStr.back() != '}')
+    {
+        cout << "Black hole" << endl;
         return mails;
     }
     std::string mailContent = mailStr.substr(1, mailStr.size() - 2);
+    if(mailContent.empty()){
+        return mails;
+    }
     mailContent = mailContent.substr(1);
     mailContent.pop_back();
+
+    cout << "MC: "<<mailContent << endl;
+
     std::stringstream ss(mailContent);
     std::string item;
     std::vector<std::string> parts;
-    while (std::getline(ss, item, ',')) {
+    while (std::getline(ss, item, ','))
+    {
         item.erase(0, item.find_first_not_of(" \t\n\r\f\v"));
         item.erase(item.find_last_not_of(" \t\n\r\f\v") + 1);
 
-        if (item.front() != '"' || item.back() != '"') {
+        if (item.front() != '"' || item.back() != '"')
+        {
             continue;
         }
         std::string msg = item.substr(1, item.size() - 2);
         parts.push_back(msg);
-
     }
-        if (parts.size() == 6) {
+    if (parts.size() == 6)
+    {
 
-            mails.push_back(Mail(stoi(parts[0]), parts[1], parts[5], parts[3], parts[2], parts[4]));
-        }
+        mails.push_back(Mail(stoi(parts[0]), parts[1], parts[5], parts[3], parts[2], parts[4]));
+    }
     return mails;
 }
 std::vector<std::string> User::parseBlockList(const std::string &blockListStr)
@@ -178,64 +192,94 @@ void Message::setTime(const std::string &time)
     this->time = time;
 }
 
-Mail::Mail(const int& id, const std::string& from, const std::string& msg, const std::string& status, const std::string& time, string &header){}
+Mail::Mail(const int &id, const std::string &from, const std::string &msg, const std::string &status, const std::string &time, string &header) {}
 
 // Getter and setter for 'from' field
-std::string Mail::getFrom() const {
+std::string Mail::getFrom() const
+{
     return from;
 }
 
-void Mail::setFrom(const std::string& from) {
+void Mail::setFrom(const std::string &from)
+{
     this->from = from;
 }
 
 // Getter and setter for 'msg' field
-std::string Mail::getMsg() const {
+std::string Mail::getMsg() const
+{
     return msg;
 }
 
-void Mail::setMsg(const std::string& msg) {
+void Mail::setMsg(const std::string &msg)
+{
     this->msg = msg;
 }
 
 // Getter and setter for 'status' field
-std::string Mail::getStatus() const {
+std::string Mail::getStatus() const
+{
     return status;
 }
 
-void Mail::setStatus(const std::string& status) {
+void Mail::setStatus(const std::string &status)
+{
     this->status = status;
 }
 
 // Getter and setter for 'time' field
-std::string Mail::getTime() const {
+std::string Mail::getTime() const
+{
     return time;
 }
 
-void Mail::setTime(const std::string& time) {
+void Mail::setTime(const std::string &time)
+{
     this->time = time;
 }
 
-std::string Mail::getHeaders() const {
+std::string Mail::getHeaders() const
+{
     return header;
 }
-void Mail::setHeader(const std::string& header) {
+void Mail::setHeader(const std::string &header)
+{
     this->header = header;
 }
 
-void Mail::setId(const int& id){
-    this -> id = id;
+void Mail::setId(const int &id)
+{
+    this->id = id;
 }
 int Mail::getId() const
 {
     return id;
 }
 
-
 // Ratings
 void Ratings::updateRanking(string userId)
 {
     // read from the file and update the ranking
 }
-
+User::User(const User& other) {
+    username = other.username;
+    password = other.password;
+    wins = other.wins;
+    loss = other.loss;
+    draw = other.draw;
+    isPlaying = other.isPlaying;
+    messages = other.messages; // shallow copy
+    mail = other.mail; // shallow copy
+    quietMode = other.quietMode;
+    blockList = other.blockList; // shallow copy
+    rank = other.rank;
+    points = other.points;
+    totalGames = other.totalGames;
+    isSendingMessage = other.isSendingMessage;
+    opponent = other.opponent;
+    request_from = other.request_from;
+    request_to = other.request_to;
+    currentGameId = other.currentGameId;
+    moveName = other.moveName;
+}
 // Game::
