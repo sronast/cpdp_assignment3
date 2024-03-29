@@ -548,8 +548,7 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
         int opponet_fd = user_socket_map[opponent_name];
 
         if(user.getIsPlaying()){
-            oss << "You are currently playing a game..\nComplete it to send new match\\ 
-            request..\n<" << user_name << ">:";
+            oss << "You are currently playing a game..\nComplete it to send new match request..\n<" << user_name << ">:";
             string msg = oss.str();
             sendMsg(client, msg);
         }
@@ -994,13 +993,13 @@ string GameServer::getOnlineUsers()
     return res;
 }
 
-vector<string> GameServer::displayAllUsers() {} // who
+// vector<string> GameServer::displayAllUsers() {} // who
 
-vector<string> GameServer::displayAllGames() {}
+// vector<string> GameServer::displayAllGames() {}
 
-User GameServer::getUser() {} // stats [name]
+// User GameServer::getUser() {} // stats [name]
 
-User GameServer::getUser(string username) {} // stats [name]
+// User GameServer::getUser(string username) {} // stats [name]
 
 User& GameServer::registerUser(string username, string password, bool isGuest)
 {
@@ -1052,7 +1051,7 @@ User& GameServer::registerUser(string username, string password, bool isGuest)
     // return usr.registerUser(username, password);
 }
 
-bool GameServer::loginUser(string username, string password) {}
+// bool GameServer::loginUser(string username, string password) {}
 
 bool GameServer::isUserOnline(string &user)
 {

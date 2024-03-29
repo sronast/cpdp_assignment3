@@ -18,6 +18,25 @@
 User::User() : wins(0), loss(0), draw(0), isPlaying(false), quietMode(false), rank(0), points(0), totalGames(0)
 {
     isSendingMessage = false;
+    setIsPlaying(false);
+    setWins(0);
+    setLoss(0);
+    setDraw(0);
+    setQuietMode(false);
+    setRank(0);
+    setPoints(0);
+    setTotalGames(0);
+    setUsername("");
+    setPassword("");
+    setIsPlaying(false);
+    opponent="";
+    request_from={};
+    request_to={};
+    currentGameId=0;
+    moveName = "";
+    setMessages({});
+    setMail({});
+    setBlockList({});
 }
 
 // Getters and setters

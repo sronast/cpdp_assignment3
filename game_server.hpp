@@ -116,19 +116,19 @@ public:
     bool isUserRegistered(string &user);
 
 
-    vector<string> displayAllUsers(); 
+    // vector<string> displayAllUsers(); 
 
     string getOnlineUsers();
 
-    vector<string> displayAllGames();
+    // vector<string> displayAllGames();
 
-    User getUser();  // stats [name]
+    // User getUser();  // stats [name]
 
-    User getUser(string username);  // stats [name]
+    // User getUser(string username);  // stats [name]
 
     User& registerUser(string username, string password, bool isGuest);
 
-    bool loginUser(string username, string password);
+    // bool loginUser(string username, string password);
 };
 
 #endif
