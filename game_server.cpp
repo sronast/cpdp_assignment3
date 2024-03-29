@@ -652,17 +652,29 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
     else if (command == "shout")
     {
         string username = socket_user_map[client];
-        string msg = tokens[1];
+        string msg = username + " shouted a message";
+        msg += tokens[1];
         for( const auto it: socket_user_map){
             int clientId = it.first;
             string username = socket_user_map[clientId];
+            if (clientId == client){
+                continue;
+            }
             User& usr = allUsersInfo[username];
             vector<string> userBlockList = usr.getBlockList();
+            for (const auto it: userBlockList){
+                cout << "Block list: " << it<<endl;
+            }
             auto its = find(userBlockList.begin(), userBlockList.end(), username);
-            if (!usr.getQuietMode() && its == userBlockList.end()){
+            bool userInBlockList = its != userBlockList.end();
+            cout << "User in block list "<< userInBlockList << endl;
+
+            if (!usr.getQuietMode() && !userInBlockList){
                 // only send message when the user is not in quiet mode and has not blocked the user 
                 sendMsg(clientId, msg);
             }
+            string msg = "Shouted to everyone!! \n<"+ username+">";
+            sendMsg(client, msg);
         }
     }
     else if (command == "tell")
@@ -673,13 +685,16 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
 
         User& user =  allUsersInfo[messageTo];
         // int randomId = generateRandomNumber(1000, 9999);
-        Message msg = Message(userFrom,message, "unread",getTimeNow());
+        Message msg = Message(userFrom,message, "read",getTimeNow());
         vector<Message> userMessages = user.getMessages();
         userMessages.push_back(msg);
         user.setMessages(userMessages);
-        string msgTo = "You have recieved a new message from " + userFrom;
+        string msgTo = "You have recieved a new message from " + userFrom +"\n "+message+ "\n <"+user.getUsername()+">";
         int messageToClient = user_socket_map[messageTo];
+        string usern = socket_user_map[client];
         sendMsg(messageToClient, msgTo);
+        string meroChak = "\n<"+usern+">";
+        sendMsg(client,meroChak);
     }
     else if (command == "kibitz")
     {
