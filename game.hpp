@@ -20,6 +20,8 @@ public:
     string user1;
     string user2;
     string next_move;
+    vector<int> observers;
+    vector<string> comments;
 
 
     TicTacToe();

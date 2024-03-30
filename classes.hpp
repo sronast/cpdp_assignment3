@@ -48,6 +48,7 @@ private:
     int id;
 
 public:
+    string to;
     // Constructor
     Mail(const int& id, const std::string& from, const std::string& msg, const std::string& status, const std::string& time, string &header);
 
@@ -91,6 +92,9 @@ public:
     unordered_set<string> request_to;
     int currentGameId;
     string moveName = "";
+    int gameObserving;
+    string info;
+    Mail draft;
     // Constructor
     User();
     User(const User& other);

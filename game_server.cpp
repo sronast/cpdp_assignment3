@@ -5,6 +5,8 @@
 
 // GameServer
 
+string draftMsg = "";
+
 GameServer::GameServer(int port = 50001)
 {
     server_port = port;
@@ -329,6 +331,7 @@ bool GameServer::handleClient(int client) // For handling different client input
 
     // Convert buffer to string
     string received_data(buffer, msg_size);
+    
 
     vector<string> tokens = tokenize(received_data, ' ');
     for (string t : tokens)
@@ -450,6 +453,7 @@ void GameServer::handleGuest(int &client, bool &is_empty_msg, vector<string> &to
             msg = "User registered \n";
         }
         sendMsg(client, msg);
+        sendEmptyMsg(client);
         // handle user regsitration
     }
     else
@@ -459,24 +463,10 @@ void GameServer::handleGuest(int &client, bool &is_empty_msg, vector<string> &to
                          "\tCommand: register username password\n";
 
         sendMsg(client, message);
+        sendEmptyMsg(client);
     }
 }
 
-// // Function to generate a random number using timestamp as a seed
-// int generateRandomNumber() {
-//     // Get the current time as a timestamp
-//     auto now = std::chrono::system_clock::now();
-//     auto timestamp = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
-
-//     // Use the timestamp as a seed for the random number engine
-//     std::mt19937 gen(static_cast<unsigned>(timestamp));
-
-//     // Create a uniform distribution for the range
-//     std::uniform_int_distribution<int> distribution(min, max);
-
-//     // Generate a random number
-//     return distribution(gen);
-// }
 string getTimeNow(){
     // Get the current time
     std::time_t currentTime = std::time(nullptr);
@@ -515,8 +505,9 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
         // list all online users
         string username = socket_user_map[client];
         string allOnlineUsers = getOnlineUsers();
-        allOnlineUsers += "\n <"+ username + ">: ";
         sendMsg(client, allOnlineUsers);
+        sendEmptyMsg(client);
+
     }
     else if (command == "stats")
     {
@@ -525,22 +516,56 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
         string username = socket_user_map[client];
         std::ostringstream oss;
         oss << "Stats for: " << userNameToView << ": \n"
-            << "Wins: " << user.getWins()
+            << "\nInfo: " << user.info
+            << "\nWins: " << user.getWins()
             << "\n Loss: " << user.getLoss()
             << "\n Draws: " << user.getDraw()
-            << "\n <"+ username + ">: ";
         std::string msg = oss.str();
         sendMsg(client, msg);
+        sendEmptyMsg(client);
+
     }
     else if (command == "game")
     {
+        string msg = "All games:"
+        for (const auto it: all_games){
+            TicTacToe game = it.second;
+            msg += "\n Game ID: " + game.id
+                + "\n Player 1: " + game.user1
+                + "\n Player 2: " + game.user3
+                + "\ Player to move: "+ game.next_move;
+            
+        }
+        sendMsg(client, msg);
+        sendEmptyMsg(client);
     }
     else if (command == "observe")
     {
+        // handle tokens <=1
+        string gameToObserve = tokens[1];
+        string username = socket_user_map[client];
+        User& user = allUsersInfo[username];
+        // handle string to int conversion error
+        int gameNumber = stoi(gameToObserve);
+        user.gameObserving = gameNumber;
+        TicTacToe& game = all_games[gameNumber];
+        game.observers.push_back(client);
+        string msg = "Oberving game: "+gameToObserve + ". You will now receive updates when moves are made or someone comments";
+        sendMsg(client, msg);
+        sendEmptyMsg(client);
+
     }
     else if (command == "unobserve")
     {
-    }
+        string username = socket_user_map[client];
+        User& user = allUsersInfo[username];
+        TicTacToe& game = all_games[user.gameObserving];
+        game.observers.erase(remove(game.observers.begin(), game.observers.end(), user.gameObserving), game.observers.end());
+        user.gameObserving = 0;
+        string msg = "Removed game from observing";
+        sendMsg(client, msg);
+        sendEmptyMsg(client);
+    } 
     else if (command == "match")
     {
         string opponent_name = tokens[1];
@@ -645,9 +670,74 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
     }
     else if (command == "resign")
     {
+        // check if user is playing 
+        string username = socket_user_map[client];
+        User& user = allUsersInfo[username];
+        string msg = "";
+        if(!user.getIsPlaying()){
+            msg += "You are not currently playing a match.";
+            sendMsg(client, msg);
+            sendEmptyMsg(client);
+        }
+        else{
+            int gameId = user.currentGameId;
+            TicTacToe& game = all_games[gameId];
+            int opponentClient = 0;
+            user.setTotalGames(user.getTotalGames()+1);
+            user.setLoss(user.getLoss()+1);
+            User& opponent;
+            // end the game as loss
+            if (game.user1 == username){
+                // current player is user 1
+                // get the other user
+                opponent = allUsersInfo[game.user2];
+                opponentClient = user_socket_map[game.user2]
+            }
+            else{
+                // current player is user 2
+                // get the other user
+                opponent = allUsersInfo[game.user1];
+                opponentClient = user_socket_map[game.user1];
+            }
+            opponent.setTotalGames(user.getTotalGames()+1);
+            opponent.setWins(user.getWins()+1);
+            opponent.setPoints(user.getPoints()+3);
+
+            string userMsg = "You have lost the game!";
+            sendMsg(client, userMsg);
+
+            string opponentMsg = user.getUsername() +" has resigned the game. You have won!";
+            sendMsg(opponentClient, opponentMsg);
+            sendEmptyMsg(opponentClient);
+
+            // alert all observers too
+            string observerMsg = user.getUsername()+ " has resigned the game!";
+            for (const auto it: game.observers){
+                sendMsg(it, observerMsg);
+                sendEmptyMsg(it);
+            }
+
+            // remove the game
+            all_games.erase(gameId);
+        }
     }
     else if (command == "refresh")
     {
+        string username = socket_user_map[client];
+        User& user = allUsersInfo[username];
+        // current game observing 
+        int currentGame = user.gameObserving;
+        if (currentGame == 0){
+            string msg = "You are not observing any games at the moment";
+            sendMsg(client, msg);
+            sendEmptyMsg();
+        }
+        TicTacToe& game = all_games[currentGame];
+        string msg = "Game refreshed! \n"
+                game.displayBoard();
+        sendMsg(client, msg);
+        sendEmptyMsg(client);
+
     }
     else if (command == "shout")
     {
@@ -689,18 +779,44 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
         vector<Message> userMessages = user.getMessages();
         userMessages.push_back(msg);
         user.setMessages(userMessages);
-        string msgTo = "You have recieved a new message from " + userFrom +"\n "+message+ "\n <"+user.getUsername()+">";
+        string msgTo = "You have recieved a new message from " + userFrom +"\n Message: "+message+ "\t Time: "+msg.getTime()+ "\n <"+user.getUsername()+">";
         int messageToClient = user_socket_map[messageTo];
         string usern = socket_user_map[client];
         sendMsg(messageToClient, msgTo);
         string meroChak = "\n<"+usern+">";
         sendMsg(client,meroChak);
     }
-    else if (command == "kibitz")
+    else if (command == "kibitz" || command == "'")
     {
-    }
-    else if (command == "\"")
-    {
+        User& user = allUsersInfo[socket_user_map[client]];
+        int gameId = user.gameObserving;
+        TicTacToe& game = all_games[gameId];
+        string comment = "";
+        for(const auto it: tokens){
+            if (it == command){
+                continue;
+            }
+            comment += it + " ";
+        }
+        string msg = user.getUsername() +" commented: "+ comment;
+        for (const auto it: game.observers){
+            sendMsg(it, msg);
+            sendEmptyMsg(it);
+        }
+        User& user1 = allUsersInfo[game.user1];
+        int user1Client = user_socket_map[game.user1];
+        User& user2 = allUsersInfo[game.user2];
+        int user2Client = user_socket_map[game.user2];
+
+        sendMsg(user1Client, msg);
+        sendEmptyMsg(user1Client);
+
+        sendMsg(user2Client, msg);
+        sendEmptyMsg(user2Client);
+
+        game.comments.push_back(msg);
+
+
     }
     else if (command == "quiet")
     {
@@ -760,10 +876,17 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
         string username = socket_user_map[client];
         User& user =  allUsersInfo[username];
         vector<Mail> mails = user.getMail();
+
+        if(mails.size() == 0){
+            string msg1 = "You have no mails!";
+            sendMsg(client, msg1);
+            sendEmptyMsg(client);
+
+        }
         string msg = "Headers: \n";
         for (const auto it : mails)
         {
-            msg += it.getHeaders() + "\n";
+            msg += it.getId() +"\t"+ it.getHeaders()+ "\t"+it.getTime() + "\n";
         }
         msg += "<" + username + ">: ";
         sendMsg(client, msg);
@@ -779,7 +902,7 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
         {
             if (it.getId() == stoi(idToMatch))
             {
-                msg += it.getMsg() + "\n";
+                msg += it.getId() +"\t"+ it.getHeaders()+ "\t"+it.getMsg() +"\t" + it.getTime() + "\n";
             }
         }
         msg += "<" + username + ">: ";
@@ -815,12 +938,42 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
         string mailTo = tokens[1];
         string message = tokens[2];
         string userFrom = socket_user_map[client];
-        User& user =  allUsersInfo[mailTo];
+        User& user =  allUsersInfo[userFrom];
+        user.setIsSendingMsg(true);
         int randomId = generateRandomNumber();
-        Mail mail = Mail(randomId, userFrom, message, "unread", getTimeNow(), message);
+        Mail mail = Mail(randomId, userFrom, "", "unread", getTimeNow(), message);
+        mail.to = mailTo;
+        string msg = "Enter the message below. After you're done send a new line with only '.' to send the mail\n";
+        user.draft = mail;
+        sendMsg(client, msg);
+    }
+    else if(command == "." && tokens.size() == 1){
+        // send the mail now
+        User& user = allUsersInfo[socket_user_map[client]];
+        Mail& mail = user.draft;
+        mail.setMsg(draftMsg);
+        int toClient = user_socket_map[mail.to];
+        string msg = "You have received a new mail from: " + user.getUsername() + "\n" + mail.getHeaders() +"\t" + mail.getTime();
+        sendMsg(toClient, msg);
+        sendEmptyMsg(toClient);
+
+        string userMsg = "Mail sent!";
+        sendMsg(client, userMsg);
+        sendEmptyMsg(client);
+
+        draftMsg = "";
+        user.setIsSendingMsg(false);
+
     }
     else if (command == "info")
     {
+        string info = tokens[1];
+        User& user = allUsersInfo[socket_user_map[client]];
+
+        user.info = info;
+        string msg = "Info updated!";
+        sendMsg(client, msg);
+        sendEmptyMsg(client);
     }
     else if (command == "passwd")
     {
@@ -833,6 +986,7 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
     else if (command == "help" || command == "?")
     {
         sendMsg(client, manual);
+        sendEmptyMsg(client);
     
     }
     else if (is_empty_msg && !user.getIsSendingMsg())
@@ -910,8 +1064,16 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
     }
     else
     {
-        string msg = "Command not suppported!!";
-        sendMsg(client, msg);
+        User& user = allUsersInfo[socket_user_map[client]];
+        if(user.getIsSendingMsg()){
+            // do nothing. user is typing the message
+            draftMsg += received_data + "\n";
+        }
+        else{
+            string msg = "Command not suppported!!";
+            sendMsg(client, msg);
+
+        }
     }
 }
 
@@ -990,6 +1152,17 @@ void GameServer::sendMsg(int &client, string &msg)
     {
         msg += "<guest: >";
     }
+    if (send(client, msg.c_str(), msg.length(), 0) < 0)
+    {
+        std::cerr << "Send failed" << std::endl;
+    }
+    cout << "sent.." << endl;
+}
+
+void GameServer::sendEmptyMsg(int &client)
+{
+    string username = socket_user_map[client];
+    string msg += "<"+username+">: ";
     if (send(client, msg.c_str(), msg.length(), 0) < 0)
     {
         std::cerr << "Send failed" << std::endl;

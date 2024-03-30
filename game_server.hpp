@@ -108,6 +108,7 @@ public:
     void handleClientExit(int &client, string &msg);
 
     void sendMsg(int &client, string &msg);
+    void sendEmptyMsg(int &client);
     //Handling different messsages
 
     // USers
