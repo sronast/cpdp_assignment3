@@ -28,6 +28,7 @@ public:
 
     TicTacToe();
     TicTacToe(string usr1, string usr2);
+    TicTacToe(const TicTacToe& other);
     // TicTacToe& TicTacToe::operator=(TicTacToe& other);
 
     void resetBoard();

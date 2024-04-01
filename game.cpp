@@ -9,6 +9,23 @@ TicTacToe::TicTacToe(string usr1, string usr2)
     user2 = usr2;
     next_move = usr1;
     id = generateRandomNumber();
+    cout<<"Game Id cpppp: "<<id<<endl;
+}
+TicTacToe::TicTacToe(const TicTacToe& other){
+    user1 = other.user1;
+    user2 = other.user2;
+    user1Time = other.user1Time;
+    user2Time = other.user2Time;
+    next_move=other.next_move;
+    board=other.board;
+    boardSize = other.boardSize;
+    id = other.id;
+    columnMap = other.columnMap;
+    observers = other.observers;
+    comments=other.comments;
+    
+
+    
 }
 
 void TicTacToe::resetBoard()

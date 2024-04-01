@@ -508,7 +508,10 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
     }
     else if (command == "stats")
     {
-        string userNameToView = tokens[1];
+        string userNameToView = socket_user_map[client];
+        if (tokens.size() > 1){
+            userNameToView = tokens[1];
+        }
         User &user = allUsersInfo[userNameToView];
         string username = socket_user_map[client];
         std::ostringstream oss;
@@ -524,13 +527,15 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
     else if (command == "game")
     {
         string msg = "All games:";
-        for (const auto it : all_games)
+        cout<<"ya samma print vayo\n";
+        for (auto it : all_games)
         {
-            TicTacToe game = it.second;
+            TicTacToe &game = it.second;
+
             msg += "\n Game ID: " + game.id;
             msg += "\n Player 1: " + game.user1;
             msg += "\n Player 2: " + game.user2;
-            msg += "\ Player to move: " + game.next_move;
+            msg += "\n Player to move: " + game.next_move;
         }
         sendMsg(client, msg);
         sendEmptyMsg(client);
@@ -627,6 +632,8 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
                     int opponentClient = user_socket_map[opponent_name];
                     sendMsg(opponentClient, msg);
                     sendEmptyMsg(opponentClient);
+                    sendEmptyMsg(client);
+
 
                     // also remove the old request and insert the new one
                     match_requests.erase(user_name);
@@ -670,9 +677,17 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
                     user.moveName = "X";
                     cout << "Eta samma" <<endl;
                     opponent.currentGameId = game.id;
+                    cout << "1" << endl;
                     opponent.moveName = "O";
+                    cout << "2" << endl;
+
                     int id = game.id;
+                    cout << "3" << endl;
+
+                    // by reference use graya xa??
                     all_games[id] = game;
+                    cout << "4" << endl;
+
                     cout << "Before displaying board" << endl;
                     string board =game.displayBoard();
                     cout << "After displaying board" << board<<endl;
@@ -682,7 +697,9 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
                     string msg = oss.str();
                     cout << "msg is "<< msg <<endl;
                     sendMsg(opponet_fd, msg);
+                    sendEmptyMsg(opponet_fd);
                     sendMsg(client, msg);
+                    sendEmptyMsg(client);
                 }
             }
             else
@@ -759,6 +776,7 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
 
             string userMsg = "You have lost the game!";
             sendMsg(client, userMsg);
+            sendEmptyMsg(client);
 
             string opponentMsg = user.getUsername() + " has resigned the game. You have won!";
             sendMsg(opponentClient, opponentMsg);
@@ -1077,8 +1095,24 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
         {
             msg += "Invalid command! You are not currently playing a game";
             sendMsg(client, msg);
+            return;
         }
+        cout << "Next move is "<< game.next_move << endl;
+        cout << "current user name is "<< currentUser << endl;
+        if(game.next_move != currentUser){
+            string msg1 = "It is not your turn. Wait for your turn";
+            sendMsg(client, msg1);
+            sendEmptyMsg(client);
+            return;
+        }
+        
         int indexToUpdate = getIndex(tokens[0]);
+        if(game.board[indexToUpdate] != " "){
+            string errorMsg = "You cannot make this move. It has already been made before! Try another move";
+            sendMsg(client, errorMsg);
+            sendEmptyMsg(client);
+            return;
+        }
         game.board[indexToUpdate] = user.moveName;
         string userToMove = user1;
         if (currentUser == user1)
@@ -1087,6 +1121,13 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
         }
         int opponentClient = user_socket_map[userToMove];
         bool isGameWon = game.checkGameWon(user.moveName);
+        bool isGameDraw = true;
+        for(auto it: game.board){
+            // loop through the game board. If it finds any empty slot game can still continue
+            if (it == " "){
+                isGameDraw = false;
+            }
+        }
         cout << "game won is " << isGameWon << endl;
         if (isGameWon)
         {
@@ -1095,6 +1136,8 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
             msg += game.displayBoard();
             sendMsg(client, msg);
             sendMsg(opponentClient, msg);
+            sendEmptyMsg(client);
+            sendEmptyMsg(opponentClient);
             if (user_name == usr1.getUsername())
             {
                 // Usr1 has won
@@ -1118,14 +1161,43 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
             usr2.setTotalGames(usr2.getTotalGames() + 1);
             usr1.setTotalGames(usr1.getTotalGames() + 1);
         }
+        else if (isGameDraw){
+            string msg2 = "Game has ended in a draw!";
+            cout << msg << endl;
+            msg += game.displayBoard();
+            sendMsg(client, msg2);
+            sendMsg(opponentClient, msg2);
+            sendEmptyMsg(client);
+            sendEmptyMsg(opponentClient);
+            usr1.setPoints(usr1.getPoints() + 1);
+            usr1.setDraw(usr1.getDraw() + 1);
+            usr2.setPoints(usr2.getPoints() + 1);
+            usr2.setDraw(usr2.getDraw() + 1);
+            usr1.setIsPlaying(false);
+            usr1.opponent = "";
 
-        string message = "User to move: " + userToMove + "\n";
+            usr2.setIsPlaying(false);
+            usr2.opponent = "";
 
-        string updatedBoard = game.displayBoard();
-        message += updatedBoard + "\n";
+            usr2.setTotalGames(usr2.getTotalGames() + 1);
+            usr1.setTotalGames(usr1.getTotalGames() + 1);
 
-        sendMsg(client, message);
-        sendMsg(opponentClient, message);
+        }
+        else{
+            string message = "User to move: " + userToMove + "\n";
+
+            string updatedBoard = game.displayBoard();
+            message += updatedBoard + "\n";
+
+            sendMsg(client, message);
+            sendEmptyMsg(client);
+            sendMsg(opponentClient, message);
+            sendEmptyMsg(opponentClient);
+        }
+        // update the next move
+        game.next_move = game.next_move == user1? user2:user1;
+
+
     }
     else
     {
