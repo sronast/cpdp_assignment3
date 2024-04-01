@@ -51,7 +51,7 @@ public:
     string to;
     // Constructor
     Mail(const int& id, const std::string& from, const std::string& msg, const std::string& status, const std::string& time, string &header);
-
+    Mail();
     // Getters and setters for member variables
     std::string getFrom() const;
     void setFrom(const std::string& from);

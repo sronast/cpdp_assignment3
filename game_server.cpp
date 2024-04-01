@@ -621,6 +621,7 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
 
                 if (!blackOrWhiteMatch || !timeMatch)
                 {
+                    cout << "match vaena requests"<<endl;
                     // game settings do not match. dont start the match. send new request to them instead.
                     string msg = user_name + " has requested a game with new settings. Type match " + user_name + " " + opponentBlackOrW + " " + tokens[3];
                     int opponentClient = user_socket_map[opponent_name];
@@ -639,23 +640,27 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
                 }
                 else
                 {
+                    cout << "match vayo request" << endl;
                     // match requests match. Now start a match
+                    cout << "Username is " << user_name <<endl;
                     match_requests.erase(user_name);
                     // user.request_from.erase(opponent_name);
-                    for (const auto it : allUsersInfo)
-                    {
-                        if (it.first == opponent_name)
-                        {
-                        }
-                        else if (it.first == user_name)
-                        {
-                        }
-                    }
+                    // for (const auto it : allUsersInfo)
+                    // {
+                    //     if (it.first == opponent_name)
+                    //     {
+                    //     }
+                    //     else if (it.first == user_name)
+                    //     {
+                    //     }
+                    // }
+
                     user.setIsPlaying(true);
                     opponent.setIsPlaying(true);
                     user.opponent = opponent_name;
                     opponent.opponent = user_name;
 
+                    cout << "Game init" <<endl;
                     // create a new instance of game
                     TicTacToe game = TicTacToe(user_name, opponent_name);
                     game.user1Time = stoi(settings[1]);
@@ -663,14 +668,19 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
                     
                     user.currentGameId = game.id;
                     user.moveName = "X";
-
+                    cout << "Eta samma" <<endl;
                     opponent.currentGameId = game.id;
                     opponent.moveName = "O";
                     int id = game.id;
                     all_games[id] = game;
-                    oss << "Game started User to move: " << user_name << endl;
-                    oss << game.displayBoard() << endl;
+                    cout << "Before displaying board" << endl;
+                    string board =game.displayBoard();
+                    cout << "After displaying board" << board<<endl;
+
+                    oss << "Game started! User to move: " << user_name << endl;
+                    oss << board << endl;
                     string msg = oss.str();
+                    cout << "msg is "<< msg <<endl;
                     sendMsg(opponet_fd, msg);
                     sendMsg(client, msg);
                 }

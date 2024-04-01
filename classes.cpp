@@ -211,6 +211,8 @@ void Message::setTime(const std::string &time)
     this->time = time;
 }
 
+Mail::Mail(){}
+
 Mail::Mail(const int &id, const std::string &from, const std::string &msg, const std::string &status, const std::string &time, string &header) {}
 
 // Getter and setter for 'from' field
