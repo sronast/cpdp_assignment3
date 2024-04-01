@@ -39,29 +39,29 @@ public:
 };
 
 class Mail {
-private:
+    
+
+public:
     std::string from;
     std::string msg;
     std::string status;  // "init", "sent", "delivered", "read"
     std::string time;
     string header;
     int id;
-
-public:
     string to;
     // Constructor
-    Mail(const int& id, const std::string& from, const std::string& msg, const std::string& status, const std::string& time, string &header);
+    Mail(int id, string from, string msg, string status, string time, string header);
     Mail();
     // Getters and setters for member variables
-    std::string getFrom() const;
-    void setFrom(const std::string& from);
-    std::string getMsg() const;
-    void setMsg(const std::string& msg);
-    std::string getStatus() const;
-    void setStatus(const std::string& status);
-    std::string getTime() const;
-    void setTime(const std::string& time);
-    std::string getHeaders() const;
+    string getFrom() const;
+    void setFrom(const string& from);
+    string getMsg() const;
+    void setMsg(const string& msg);
+    string getStatus() const;
+    void setStatus(const string& status);
+    string getTime() const;
+    void setTime(const string& time);
+    string getHeaders() const;
     void setHeader(const std::string& header);
     void setId(const int& id);
     int getId() const;
@@ -95,6 +95,9 @@ public:
     int gameObserving;
     string info;
     Mail draft;
+    string draftMessage;
+    string draftHeader;
+    string mailTo;
     // Constructor
     User();
     User(const User& other);

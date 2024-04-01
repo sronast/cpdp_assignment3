@@ -509,7 +509,8 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
     else if (command == "stats")
     {
         string userNameToView = socket_user_map[client];
-        if (tokens.size() > 1){
+        if (tokens.size() > 1)
+        {
             userNameToView = tokens[1];
         }
         User &user = allUsersInfo[userNameToView];
@@ -526,13 +527,13 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
     }
     else if (command == "game")
     {
+        cout << "game command\n";
         string msg = "All games:";
-        cout<<"ya samma print vayo\n";
         for (auto it : all_games)
         {
             TicTacToe &game = it.second;
 
-            msg += "\n Game ID: " + game.id;
+            msg += "\n Game ID: " + to_string(game.id);
             msg += "\n Player 1: " + game.user1;
             msg += "\n Player 2: " + game.user2;
             msg += "\n Player to move: " + game.next_move;
@@ -626,14 +627,13 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
 
                 if (!blackOrWhiteMatch || !timeMatch)
                 {
-                    cout << "match vaena requests"<<endl;
+                    cout << "match vaena requests" << endl;
                     // game settings do not match. dont start the match. send new request to them instead.
                     string msg = user_name + " has requested a game with new settings. Type match " + user_name + " " + opponentBlackOrW + " " + tokens[3];
                     int opponentClient = user_socket_map[opponent_name];
                     sendMsg(opponentClient, msg);
                     sendEmptyMsg(opponentClient);
                     sendEmptyMsg(client);
-
 
                     // also remove the old request and insert the new one
                     match_requests.erase(user_name);
@@ -649,7 +649,7 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
                 {
                     cout << "match vayo request" << endl;
                     // match requests match. Now start a match
-                    cout << "Username is " << user_name <<endl;
+                    cout << "Username is " << user_name << endl;
                     match_requests.erase(user_name);
                     // user.request_from.erase(opponent_name);
                     // for (const auto it : allUsersInfo)
@@ -667,15 +667,15 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
                     user.opponent = opponent_name;
                     opponent.opponent = user_name;
 
-                    cout << "Game init" <<endl;
+                    cout << "Game init" << endl;
                     // create a new instance of game
                     TicTacToe game = TicTacToe(user_name, opponent_name);
                     game.user1Time = stoi(settings[1]);
                     game.user2Time = stoi(settings[1]);
-                    
+
                     user.currentGameId = game.id;
                     user.moveName = "X";
-                    cout << "Eta samma" <<endl;
+                    cout << "Eta samma" << endl;
                     opponent.currentGameId = game.id;
                     cout << "1" << endl;
                     opponent.moveName = "O";
@@ -689,13 +689,13 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
                     cout << "4" << endl;
 
                     cout << "Before displaying board" << endl;
-                    string board =game.displayBoard();
-                    cout << "After displaying board" << board<<endl;
+                    string board = game.displayBoard();
+                    cout << "After displaying board" << board << endl;
 
                     oss << "Game started! User to move: " << user_name << endl;
                     oss << board << endl;
                     string msg = oss.str();
-                    cout << "msg is "<< msg <<endl;
+                    cout << "msg is " << msg << endl;
                     sendMsg(opponet_fd, msg);
                     sendEmptyMsg(opponet_fd);
                     sendMsg(client, msg);
@@ -847,7 +847,15 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
     else if (command == "tell")
     {
         string messageTo = tokens[1];
-        string message = tokens[2];
+        string message = "";
+        for (auto it : tokens)
+        {
+            if (it == command || it == messageTo)
+            {
+                continue;
+            }
+            message += it;
+        }
         string userFrom = socket_user_map[client];
 
         User &user = allUsersInfo[messageTo];
@@ -954,20 +962,28 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
         string username = socket_user_map[client];
         User &user = allUsersInfo[username];
         vector<Mail> mails = user.getMail();
-
         if (mails.size() == 0)
         {
             string msg1 = "You have no mails!";
             sendMsg(client, msg1);
             sendEmptyMsg(client);
         }
-        string msg = "Headers: \n";
-        for (const auto it : mails)
+        else
         {
-            msg += it.getId() + "\t" + it.getHeaders() + "\t" + it.getTime() + "\n";
+            cout<<"Email size: "<<mails.size()<<endl;
+            string msg = "Headers: \n";
+            for (auto it : mails)
+            {
+                cout<<"ID: "<<to_string(it.getId())<<endl;
+                cout<<"Get header: "<<it.getHeaders()<<endl;
+                cout<<"Time: "<<it.getTime()<<endl;
+                
+                msg += to_string(it.getId()) + "\t" + it.getHeaders() + "\t" + it.getTime() + "\n";
+                cout<<"email :"<<msg<<endl;
+            }
+            msg += "<" + username + ">: ";
+            sendMsg(client, msg);
         }
-        msg += "<" + username + ">: ";
-        sendMsg(client, msg);
     }
     else if (command == "readmail")
     {
@@ -975,6 +991,7 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
         User &user = allUsersInfo[username];
         string idToMatch = tokens[1];
         vector<Mail> mails = user.getMail();
+        cout<<"in read mail: \n";
         string msg = "Message: \n";
         for (const auto it : mails)
         {
@@ -1014,25 +1031,55 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
     else if (command == "mail")
     {
         string mailTo = tokens[1];
-        string message = tokens[2];
+        string header = "";
+        for (auto it : tokens)
+        {
+            if (it == mailTo || it == command)
+            {
+                continue;
+            }
+            header += it;
+        }
         string userFrom = socket_user_map[client];
         User &user = allUsersInfo[userFrom];
+        user.mailTo = mailTo;
         user.setIsSendingMsg();
         int randomId = generateRandomNumber();
-        Mail mail = Mail(randomId, userFrom, "", "unread", getTimeNow(), message);
-        mail.to = mailTo;
+        // Mail mail = Mail(randomId, userFrom, "", "unread", getTimeNow(), header);
+        // mail.to = mailTo;
         string msg = "Enter the message below. After you're done send a new line with only '.' to send the mail\n";
-        user.draft = mail;
+        user.draftHeader = header;
+        cout<<"Drft header:: "<<user.draftHeader<<endl;
         sendMsg(client, msg);
     }
     else if (command == "." && tokens.size() == 1)
     {
         // send the mail now
         User &user = allUsersInfo[socket_user_map[client]];
-        Mail &mail = user.draft;
-        mail.setMsg(draftMsg);
-        int toClient = user_socket_map[mail.to];
+        cout << "Draft: " << user.draftMessage << endl;
+        //
+        int randomId = generateRandomNumber();
+        string userFrom = socket_user_map[client];
+        cout << "From: " << userFrom << endl;
+        Mail mail = Mail(randomId, userFrom, user.draftMessage, "unread", getTimeNow(), user.draftHeader);
+        // Mail &mail = user.draft;
+        // mail.setMsg(draftMsg);
+        cout<<"Email details before send: "<<endl;
+        cout<<"ID: "<<to_string(mail.id)<<endl;
+        cout<<"Get header: "<<mail.header<<endl;
+        cout<<"Time: "<<mail.time<<endl;
+
+        int toClient = user_socket_map[user.mailTo];
+        cout << "User.mailto: " << user.mailTo << endl;
+        User &toUser = allUsersInfo[user.mailTo];
+
+        cout << "TO: " << toUser.getUsername();
+
         string msg = "You have received a new mail from: " + user.getUsername() + "\n" + mail.getHeaders() + "\t" + mail.getTime();
+        vector<Mail> userMails = toUser.getMail();
+        userMails.push_back(mail);
+        toUser.setMail(userMails);
+
         sendMsg(toClient, msg);
         sendEmptyMsg(toClient);
 
@@ -1097,17 +1144,19 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
             sendMsg(client, msg);
             return;
         }
-        cout << "Next move is "<< game.next_move << endl;
-        cout << "current user name is "<< currentUser << endl;
-        if(game.next_move != currentUser){
+        cout << "Next move is " << game.next_move << endl;
+        cout << "current user name is " << currentUser << endl;
+        if (game.next_move != currentUser)
+        {
             string msg1 = "It is not your turn. Wait for your turn";
             sendMsg(client, msg1);
             sendEmptyMsg(client);
             return;
         }
-        
+
         int indexToUpdate = getIndex(tokens[0]);
-        if(game.board[indexToUpdate] != " "){
+        if (game.board[indexToUpdate] != " ")
+        {
             string errorMsg = "You cannot make this move. It has already been made before! Try another move";
             sendMsg(client, errorMsg);
             sendEmptyMsg(client);
@@ -1122,9 +1171,11 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
         int opponentClient = user_socket_map[userToMove];
         bool isGameWon = game.checkGameWon(user.moveName);
         bool isGameDraw = true;
-        for(auto it: game.board){
+        for (auto it : game.board)
+        {
             // loop through the game board. If it finds any empty slot game can still continue
-            if (it == " "){
+            if (it == " ")
+            {
                 isGameDraw = false;
             }
         }
@@ -1161,7 +1212,8 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
             usr2.setTotalGames(usr2.getTotalGames() + 1);
             usr1.setTotalGames(usr1.getTotalGames() + 1);
         }
-        else if (isGameDraw){
+        else if (isGameDraw)
+        {
             string msg2 = "Game has ended in a draw!";
             cout << msg << endl;
             msg += game.displayBoard();
@@ -1181,9 +1233,9 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
 
             usr2.setTotalGames(usr2.getTotalGames() + 1);
             usr1.setTotalGames(usr1.getTotalGames() + 1);
-
         }
-        else{
+        else
+        {
             string message = "User to move: " + userToMove + "\n";
 
             string updatedBoard = game.displayBoard();
@@ -1195,9 +1247,7 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
             sendEmptyMsg(opponentClient);
         }
         // update the next move
-        game.next_move = game.next_move == user1? user2:user1;
-
-
+        game.next_move = game.next_move == user1 ? user2 : user1;
     }
     else
     {
@@ -1205,12 +1255,15 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
         if (user.getIsSendingMsg())
         {
             // do nothing. user is typing the message
-            draftMsg += received_data + "\n";
+            cout << "Reeived data: " << received_data << endl;
+            user.draftMessage += received_data;
+            cout << "draft: " << user.draftMessage << endl;
         }
         else
         {
             string msg = "Command not suppported!!";
             sendMsg(client, msg);
+            sendEmptyMsg(client);
         }
     }
 }

@@ -213,8 +213,17 @@ void Message::setTime(const std::string &time)
 
 Mail::Mail(){}
 
-Mail::Mail(const int &id, const std::string &from, const std::string &msg, const std::string &status, const std::string &time, string &header) {}
-
+Mail::Mail(int m_id,  string m_from,  string m_msg,  string m_status,  string m_time, string m_header) {
+    // randomId, userFrom, user.draftMessage, "unread", getTimeNow(), user.draftHeader
+    
+    id = m_id;
+    from = m_from;
+    msg = m_msg;
+    status = m_status;
+    time = m_time;
+    header = m_header;
+    cout<<"In mail constructor....\n\n";
+}
 // Getter and setter for 'from' field
 std::string Mail::getFrom() const
 {
@@ -302,5 +311,9 @@ User::User(const User& other) {
     request_to = other.request_to;
     currentGameId = other.currentGameId;
     moveName = other.moveName;
+    draft = other.draft;
+    draftMessage = other.draftMessage;
+    draftHeader = other.draftHeader;
+    mailTo = other.mailTo;
 }
 // Game::
