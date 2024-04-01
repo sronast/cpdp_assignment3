@@ -61,6 +61,7 @@ private:
     unordered_map<string, int> user_socket_map; //{'leo': 4} do not save guest here
     unordered_map<int, string> not_logged_in; //{4: 'user', 5: 'guest'}
     unordered_map<string, string> match_requests;
+    unordered_map<string, string> game_settings;
 
 
     //help

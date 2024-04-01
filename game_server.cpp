@@ -76,10 +76,10 @@ username (guest):)";
         // Check if the entry is a regular file
         if (entry.is_regular_file())
         {
-        
+
             // cout << "is a regular file" << endl;
             std::string filename = entry.path().filename().string();
-            cout<<filename<<endl;
+            cout << filename << endl;
             // Extract username from filename
             std::string username = filename.substr(0, filename.find(".txt"));
 
@@ -87,7 +87,7 @@ username (guest):)";
             std::ifstream userFile(entry.path());
             if (userFile.is_open())
             {
-                
+
                 // Read user data from file
                 std::string line;
                 User user;
@@ -95,7 +95,7 @@ username (guest):)";
                 // Parse user data from each line
                 while (std::getline(userFile, line))
                 {
-                     cout<<"Line:: "<<line<<endl;
+                    cout << "Line:: " << line << endl;
 
                     std::istringstream iss(line);
                     std::string key, value;
@@ -142,7 +142,7 @@ username (guest):)";
                         }
                         else if (key == "quietMode")
                         {
-                            cout<<"QM lado"<<endl;
+                            cout << "QM lado" << endl;
                             user.setQuietMode(value == "true");
                         }
                         else if (key == "blockList")
@@ -191,14 +191,13 @@ username (guest):)";
         cout << "Print garna baki xa" << endl;
         // Print out all users
         cout << "Printing all users:" << endl;
-        cout<<"for one it ended"<<endl;
+        cout << "for one it ended" << endl;
     }
-    
 }
 
 void GameServer::start()
 {
-    cout<<"lalo\n";
+    cout << "lalo\n";
     setupServer();
     cout << "server setup complete...\n"
          << endl;
@@ -331,7 +330,6 @@ bool GameServer::handleClient(int client) // For handling different client input
 
     // Convert buffer to string
     string received_data(buffer, msg_size);
-    
 
     vector<string> tokens = tokenize(received_data, ' ');
     for (string t : tokens)
@@ -404,7 +402,7 @@ void GameServer::handleLogin(int &client, bool &is_empty_msg, vector<string> &to
     {
         string usr_name = not_logged_in[client];
         not_logged_in.erase(client);
-        User& usr = allUsersInfo[usr_name];
+        User &usr = allUsersInfo[usr_name];
         cout << "User password stored is " << usr.getPassword() << endl;
         if (trim(usr.getPassword()) == trim(received_data))
         {
@@ -440,7 +438,7 @@ void GameServer::handleGuest(int &client, bool &is_empty_msg, vector<string> &to
     {
         string username = tokens[1];
         string password = tokens[2];
-        User& user =  registerUser(username, password, true);
+        User &user = registerUser(username, password, true);
         string msg = "";
         if (user.getUsername().empty())
         {
@@ -467,7 +465,8 @@ void GameServer::handleGuest(int &client, bool &is_empty_msg, vector<string> &to
     }
 }
 
-string getTimeNow(){
+string getTimeNow()
+{
     // Get the current time
     std::time_t currentTime = std::time(nullptr);
 
@@ -477,17 +476,16 @@ string getTimeNow(){
     std::strftime(buffer, bufferSize, "%Y-%m-%d %H:%M:%S", std::localtime(&currentTime));
     return buffer;
 }
-int getIndex(const std::string& input) {
+int getIndex(const std::string &input)
+{
     // Mapping of input strings to index
     static const std::map<std::string, int> indexMap = {
-        {"A1", 0}, {"A2", 1}, {"A3", 2},
-        {"B1", 3}, {"B2", 4}, {"B3", 5},
-        {"C1", 6}, {"C2", 7}, {"C3", 8}
-    };
+        {"A1", 0}, {"A2", 1}, {"A3", 2}, {"B1", 3}, {"B2", 4}, {"B3", 5}, {"C1", 6}, {"C2", 7}, {"C3", 8}};
 
     // Find the input string in the map
     auto it = indexMap.find(input);
-    if (it != indexMap.end()) {
+    if (it != indexMap.end())
+    {
         return it->second;
     }
 
@@ -499,7 +497,7 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
 {
     ostringstream oss;
     string user_name = socket_user_map[client];
-    User& user = allUsersInfo[user_name];
+    User &user = allUsersInfo[user_name];
     if (command == "who")
     {
         // list all online users
@@ -507,34 +505,32 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
         string allOnlineUsers = getOnlineUsers();
         sendMsg(client, allOnlineUsers);
         sendEmptyMsg(client);
-
     }
     else if (command == "stats")
     {
         string userNameToView = tokens[1];
-        User& user =  allUsersInfo[userNameToView];
+        User &user = allUsersInfo[userNameToView];
         string username = socket_user_map[client];
         std::ostringstream oss;
         oss << "Stats for: " << userNameToView << ": \n"
             << "\nInfo: " << user.info
             << "\nWins: " << user.getWins()
             << "\n Loss: " << user.getLoss()
-            << "\n Draws: " << user.getDraw()
+            << "\n Draws: " << user.getDraw();
         std::string msg = oss.str();
         sendMsg(client, msg);
         sendEmptyMsg(client);
-
     }
     else if (command == "game")
     {
-        string msg = "All games:"
-        for (const auto it: all_games){
+        string msg = "All games:";
+        for (const auto it : all_games)
+        {
             TicTacToe game = it.second;
-            msg += "\n Game ID: " + game.id
-                + "\n Player 1: " + game.user1
-                + "\n Player 2: " + game.user3
-                + "\ Player to move: "+ game.next_move;
-            
+            msg += "\n Game ID: " + game.id;
+            msg += "\n Player 1: " + game.user1;
+            msg += "\n Player 2: " + game.user2;
+            msg += "\ Player to move: " + game.next_move;
         }
         sendMsg(client, msg);
         sendEmptyMsg(client);
@@ -544,35 +540,39 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
         // handle tokens <=1
         string gameToObserve = tokens[1];
         string username = socket_user_map[client];
-        User& user = allUsersInfo[username];
+        User &user = allUsersInfo[username];
         // handle string to int conversion error
         int gameNumber = stoi(gameToObserve);
         user.gameObserving = gameNumber;
-        TicTacToe& game = all_games[gameNumber];
+        TicTacToe &game = all_games[gameNumber];
         game.observers.push_back(client);
-        string msg = "Oberving game: "+gameToObserve + ". You will now receive updates when moves are made or someone comments";
+        string msg = "Oberving game: " + gameToObserve + ". You will now receive updates when moves are made or someone comments";
         sendMsg(client, msg);
         sendEmptyMsg(client);
-
     }
     else if (command == "unobserve")
     {
         string username = socket_user_map[client];
-        User& user = allUsersInfo[username];
-        TicTacToe& game = all_games[user.gameObserving];
+        User &user = allUsersInfo[username];
+        TicTacToe &game = all_games[user.gameObserving];
         game.observers.erase(remove(game.observers.begin(), game.observers.end(), user.gameObserving), game.observers.end());
         user.gameObserving = 0;
         string msg = "Removed game from observing";
         sendMsg(client, msg);
         sendEmptyMsg(client);
-    } 
+    }
     else if (command == "match")
     {
         string opponent_name = tokens[1];
-        User& opponent = allUsersInfo[opponent_name];
+        string blackOrWhite = tokens[2];
+        string timeStr = tokens[3];
+        int time = stoi(timeStr);
+
+        User &opponent = allUsersInfo[opponent_name];
         int opponet_fd = user_socket_map[opponent_name];
 
-        if(user.getIsPlaying()){
+        if (user.getIsPlaying())
+        {
             oss << "You are currently playing a game..\nComplete it to send new match request..\n<" << user_name << ">:";
             string msg = oss.str();
             sendMsg(client, msg);
@@ -582,81 +582,123 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
         {
             oss << "User " << opponent_name << " is offline..\n<" << user_name << ">:";
             string msg = oss.str();
-              sendMsg(client, msg);
+            sendMsg(client, msg);
         }
-        else if(opponent.getIsPlaying()){
+        else if (opponent.getIsPlaying())
+        {
             oss << "User " << opponent_name << " is currently playing..\n<" << user_name << ">:";
             string msg = oss.str();
-          sendMsg(client, msg);
+            sendMsg(client, msg);
         }
-        else{
+        else
+        {
             bool is_response = isItemInSet(opponent_name, user.request_from);
-            for (const auto it: user.request_from){
-                cout << "set********: " << it<<endl;
+            for (const auto it : user.request_from)
+            {
+                cout << "set********: " << it << endl;
             }
-            for (const auto it: opponent.request_from){
-                cout << "set 2------: " << it<<endl;
+            for (const auto it : opponent.request_from)
+            {
+                cout << "set 2------: " << it << endl;
             }
             cout << "opponent name is " << opponent_name << endl;
             cout << "response is " << is_response << endl;
 
             auto it = match_requests.find(user_name);
             bool malaiRequestAkoXa = it != match_requests.end();
-            // if(malaiRequestAkoXa && match_requests[user_name] == opponent_name){
-            //     // start the game 
-            // }
-            if(malaiRequestAkoXa && match_requests[user_name] == opponent_name){
-                // The opponent has already sent match request 
+
+            if (malaiRequestAkoXa && match_requests[user_name] == opponent_name)
+            {
+                // The opponent has already sent match request
                 // User is acceptig the request
                 cout << "pailai dekhin xa request --------" << endl;
-                match_requests.erase(user_name);
-                // user.request_from.erase(opponent_name);
-                for (const auto it: allUsersInfo){
-                    if(it.first == opponent_name){
+                string gameK = user_name + ":" + opponent_name;
+                string gameSetting = game_settings[gameK];
+                vector<string> settings = tokenize(gameSetting, ' ');
+                bool blackOrWhiteMatch = settings[0] != tokens[2];
+                bool timeMatch = settings[1] == tokens[3];
+                string opponentBlackOrW = tokens[2] == "b" ? "w" : "b";
 
-                    }
-                    else if (it.first == user_name){
+                if (!blackOrWhiteMatch || !timeMatch)
+                {
+                    // game settings do not match. dont start the match. send new request to them instead.
+                    string msg = user_name + " has requested a game with new settings. Type match " + user_name + " " + opponentBlackOrW + " " + tokens[3];
+                    int opponentClient = user_socket_map[opponent_name];
+                    sendMsg(opponentClient, msg);
+                    sendEmptyMsg(opponentClient);
 
-                    }
+                    // also remove the old request and insert the new one
+                    match_requests.erase(user_name);
+                    game_settings.erase(gameK);
+
+                    // insert the new one
+                    match_requests[opponent_name] = user_name;
+                    string newGameKey = opponent_name + ":" + user_name;
+                    string newGameSetting = tokens[2] + " " + tokens[3];
+                    game_settings[newGameKey] = newGameSetting;
                 }
-                user.setIsPlaying(true);
-                opponent.setIsPlaying(true);
-                user.opponent = opponent_name;
-                opponent.opponent = user_name;
+                else
+                {
+                    // match requests match. Now start a match
+                    match_requests.erase(user_name);
+                    // user.request_from.erase(opponent_name);
+                    for (const auto it : allUsersInfo)
+                    {
+                        if (it.first == opponent_name)
+                        {
+                        }
+                        else if (it.first == user_name)
+                        {
+                        }
+                    }
+                    user.setIsPlaying(true);
+                    opponent.setIsPlaying(true);
+                    user.opponent = opponent_name;
+                    opponent.opponent = user_name;
 
-                // create a new instance of game
-                TicTacToe game = TicTacToe(user_name, opponent_name);
-                user.currentGameId = game.id;
-                user.moveName = "X";
+                    // create a new instance of game
+                    TicTacToe game = TicTacToe(user_name, opponent_name);
+                    game.user1Time = stoi(settings[1]);
+                    game.user2Time = stoi(settings[1]);
+                    
+                    user.currentGameId = game.id;
+                    user.moveName = "X";
 
-                opponent.currentGameId = game.id;
-                opponent.moveName = "O";
-                int id = game.id;
-                all_games[id] = game;
-                oss<<"Game started User to move: "<<user_name<<endl;
-                oss << game.displayBoard() <<endl;
-                string msg = oss.str();
-                sendMsg(opponet_fd, msg);
-                sendMsg(client, msg);
-                
-
+                    opponent.currentGameId = game.id;
+                    opponent.moveName = "O";
+                    int id = game.id;
+                    all_games[id] = game;
+                    oss << "Game started User to move: " << user_name << endl;
+                    oss << game.displayBoard() << endl;
+                    string msg = oss.str();
+                    sendMsg(opponet_fd, msg);
+                    sendMsg(client, msg);
+                }
             }
-            else{
+            else
+            {
                 cout << "Inserting to set" << endl;
-                // The user is sending match request to the opponent_name
+                // The user is sending match request to the opponent_name for the first time
                 // if user already has a key and the opponent name matches with the value then start a game and delete the entry
-                
-                // malai match request ako xa ta 
+
+                // malai match request ako xa ta
                 auto it = match_requests.find(user_name);
                 bool malaiRequestAkoXa = it != match_requests.end();
-                if(malaiRequestAkoXa && match_requests[user_name] == opponent_name){
-                    // start the game 
+                if (malaiRequestAkoXa && match_requests[user_name] == opponent_name)
+                {
+                    // start the game
                     cout << "pailai dekhin xa request" << endl;
                 }
                 //  haina vane chai send request to opponent
                 match_requests[opponent_name] = user_name;
+                // also add the game settings to map
+                // use key as opponent:user = b|w t
+                string gameKey = opponent_name + ":" + user_name;
+                string gameValue = blackOrWhite + " " + timeStr;
+                game_settings[gameKey] = gameValue;
+                string opponentBlackOrWhite = blackOrWhite == "b" ? "w" : "b";
                 // opponent.request_from.insert(user_name);
-                oss <<user_name<< " has invited you for a match. To accept type command: match " <<user_name<<  "\n<" << opponent_name << ">:";
+                oss << user_name << " has invited you for a match. To accept type command: match " << user_name << " " << opponentBlackOrWhite << " " << timeStr << "\n<" << opponent_name << ">:";
                 string msg = oss.str();
                 sendMsg(opponet_fd, msg);
                 oss.str("");
@@ -665,54 +707,57 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
                 sendMsg(client, msg1);
             }
         }
-        
-    
     }
     else if (command == "resign")
     {
-        // check if user is playing 
+        // check if user is playing
         string username = socket_user_map[client];
-        User& user = allUsersInfo[username];
+        User &user = allUsersInfo[username];
         string msg = "";
-        if(!user.getIsPlaying()){
+        if (!user.getIsPlaying())
+        {
             msg += "You are not currently playing a match.";
             sendMsg(client, msg);
             sendEmptyMsg(client);
         }
-        else{
+        else
+        {
             int gameId = user.currentGameId;
-            TicTacToe& game = all_games[gameId];
+            TicTacToe &game = all_games[gameId];
             int opponentClient = 0;
-            user.setTotalGames(user.getTotalGames()+1);
-            user.setLoss(user.getLoss()+1);
-            User& opponent;
+            user.setTotalGames(user.getTotalGames() + 1);
+            user.setLoss(user.getLoss() + 1);
+            User opponent;
             // end the game as loss
-            if (game.user1 == username){
+            if (game.user1 == username)
+            {
                 // current player is user 1
                 // get the other user
                 opponent = allUsersInfo[game.user2];
-                opponentClient = user_socket_map[game.user2]
+                opponentClient = user_socket_map[game.user2];
             }
-            else{
+            else
+            {
                 // current player is user 2
                 // get the other user
                 opponent = allUsersInfo[game.user1];
                 opponentClient = user_socket_map[game.user1];
             }
-            opponent.setTotalGames(user.getTotalGames()+1);
-            opponent.setWins(user.getWins()+1);
-            opponent.setPoints(user.getPoints()+3);
+            opponent.setTotalGames(user.getTotalGames() + 1);
+            opponent.setWins(user.getWins() + 1);
+            opponent.setPoints(user.getPoints() + 3);
 
             string userMsg = "You have lost the game!";
             sendMsg(client, userMsg);
 
-            string opponentMsg = user.getUsername() +" has resigned the game. You have won!";
+            string opponentMsg = user.getUsername() + " has resigned the game. You have won!";
             sendMsg(opponentClient, opponentMsg);
             sendEmptyMsg(opponentClient);
 
             // alert all observers too
-            string observerMsg = user.getUsername()+ " has resigned the game!";
-            for (const auto it: game.observers){
+            string observerMsg = user.getUsername() + " has resigned the game!";
+            for (auto it : game.observers)
+            {
                 sendMsg(it, observerMsg);
                 sendEmptyMsg(it);
             }
@@ -724,46 +769,50 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
     else if (command == "refresh")
     {
         string username = socket_user_map[client];
-        User& user = allUsersInfo[username];
-        // current game observing 
+        User &user = allUsersInfo[username];
+        // current game observing
         int currentGame = user.gameObserving;
-        if (currentGame == 0){
+        if (currentGame == 0)
+        {
             string msg = "You are not observing any games at the moment";
             sendMsg(client, msg);
-            sendEmptyMsg();
+            sendEmptyMsg(client);
         }
-        TicTacToe& game = all_games[currentGame];
-        string msg = "Game refreshed! \n"
-                game.displayBoard();
+        TicTacToe &game = all_games[currentGame];
+        string msg = "Game refreshed! \n";
+        msg += game.displayBoard();
         sendMsg(client, msg);
         sendEmptyMsg(client);
-
     }
     else if (command == "shout")
     {
         string username = socket_user_map[client];
         string msg = username + " shouted a message";
         msg += tokens[1];
-        for( const auto it: socket_user_map){
+        for (const auto it : socket_user_map)
+        {
             int clientId = it.first;
             string username = socket_user_map[clientId];
-            if (clientId == client){
+            if (clientId == client)
+            {
                 continue;
             }
-            User& usr = allUsersInfo[username];
+            User &usr = allUsersInfo[username];
             vector<string> userBlockList = usr.getBlockList();
-            for (const auto it: userBlockList){
-                cout << "Block list: " << it<<endl;
+            for (const auto it : userBlockList)
+            {
+                cout << "Block list: " << it << endl;
             }
             auto its = find(userBlockList.begin(), userBlockList.end(), username);
             bool userInBlockList = its != userBlockList.end();
-            cout << "User in block list "<< userInBlockList << endl;
+            cout << "User in block list " << userInBlockList << endl;
 
-            if (!usr.getQuietMode() && !userInBlockList){
-                // only send message when the user is not in quiet mode and has not blocked the user 
+            if (!usr.getQuietMode() && !userInBlockList)
+            {
+                // only send message when the user is not in quiet mode and has not blocked the user
                 sendMsg(clientId, msg);
             }
-            string msg = "Shouted to everyone!! \n<"+ username+">";
+            string msg = "Shouted to everyone!! \n<" + username + ">";
             sendMsg(client, msg);
         }
     }
@@ -773,39 +822,42 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
         string message = tokens[2];
         string userFrom = socket_user_map[client];
 
-        User& user =  allUsersInfo[messageTo];
+        User &user = allUsersInfo[messageTo];
         // int randomId = generateRandomNumber(1000, 9999);
-        Message msg = Message(userFrom,message, "read",getTimeNow());
+        Message msg = Message(userFrom, message, "read", getTimeNow());
         vector<Message> userMessages = user.getMessages();
         userMessages.push_back(msg);
         user.setMessages(userMessages);
-        string msgTo = "You have recieved a new message from " + userFrom +"\n Message: "+message+ "\t Time: "+msg.getTime()+ "\n <"+user.getUsername()+">";
+        string msgTo = "You have recieved a new message from " + userFrom + "\n Message: " + message + "\t Time: " + msg.getTime() + "\n <" + user.getUsername() + ">";
         int messageToClient = user_socket_map[messageTo];
         string usern = socket_user_map[client];
         sendMsg(messageToClient, msgTo);
-        string meroChak = "\n<"+usern+">";
-        sendMsg(client,meroChak);
+        string meroChak = "\n<" + usern + ">";
+        sendMsg(client, meroChak);
     }
     else if (command == "kibitz" || command == "'")
     {
-        User& user = allUsersInfo[socket_user_map[client]];
+        User &user = allUsersInfo[socket_user_map[client]];
         int gameId = user.gameObserving;
-        TicTacToe& game = all_games[gameId];
+        TicTacToe &game = all_games[gameId];
         string comment = "";
-        for(const auto it: tokens){
-            if (it == command){
+        for (const auto it : tokens)
+        {
+            if (it == command)
+            {
                 continue;
             }
             comment += it + " ";
         }
-        string msg = user.getUsername() +" commented: "+ comment;
-        for (const auto it: game.observers){
+        string msg = user.getUsername() + " commented: " + comment;
+        for (auto it : game.observers)
+        {
             sendMsg(it, msg);
             sendEmptyMsg(it);
         }
-        User& user1 = allUsersInfo[game.user1];
+        User &user1 = allUsersInfo[game.user1];
         int user1Client = user_socket_map[game.user1];
-        User& user2 = allUsersInfo[game.user2];
+        User &user2 = allUsersInfo[game.user2];
         int user2Client = user_socket_map[game.user2];
 
         sendMsg(user1Client, msg);
@@ -815,13 +867,11 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
         sendEmptyMsg(user2Client);
 
         game.comments.push_back(msg);
-
-
     }
     else if (command == "quiet")
     {
         string username = socket_user_map[client];
-        User& user =  allUsersInfo[username];
+        User &user = allUsersInfo[username];
         user.setQuietMode(true);
         string msg = "Quiet mode has been set on! \n <" + username + ">:";
         sendMsg(client, msg);
@@ -829,7 +879,7 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
     else if (command == "nonquiet")
     {
         string username = socket_user_map[client];
-        User& user =  allUsersInfo[username];
+        User &user = allUsersInfo[username];
         user.setQuietMode(false);
         string msg = "Quiet mode has been set off! \n <" + username + ">:";
         sendMsg(client, msg);
@@ -838,7 +888,7 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
     {
         string username = socket_user_map[client];
         string userToBlock = tokens[1];
-        User& user =  allUsersInfo[username];
+        User &user = allUsersInfo[username];
         vector<string> blockList = user.getBlockList();
         blockList.push_back(userToBlock);
         user.setBlockList(blockList);
@@ -849,7 +899,7 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
     {
         string username = socket_user_map[client];
         string userToUnblock = tokens[1];
-        User& user =  allUsersInfo[username];
+        User &user = allUsersInfo[username];
         vector<string> blockList = user.getBlockList();
 
         // Find the position of userToUnblock in the blockList vector
@@ -874,19 +924,19 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
     else if (command == "listmail")
     {
         string username = socket_user_map[client];
-        User& user =  allUsersInfo[username];
+        User &user = allUsersInfo[username];
         vector<Mail> mails = user.getMail();
 
-        if(mails.size() == 0){
+        if (mails.size() == 0)
+        {
             string msg1 = "You have no mails!";
             sendMsg(client, msg1);
             sendEmptyMsg(client);
-
         }
         string msg = "Headers: \n";
         for (const auto it : mails)
         {
-            msg += it.getId() +"\t"+ it.getHeaders()+ "\t"+it.getTime() + "\n";
+            msg += it.getId() + "\t" + it.getHeaders() + "\t" + it.getTime() + "\n";
         }
         msg += "<" + username + ">: ";
         sendMsg(client, msg);
@@ -894,7 +944,7 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
     else if (command == "readmail")
     {
         string username = socket_user_map[client];
-        User& user =  allUsersInfo[username];
+        User &user = allUsersInfo[username];
         string idToMatch = tokens[1];
         vector<Mail> mails = user.getMail();
         string msg = "Message: \n";
@@ -902,7 +952,7 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
         {
             if (it.getId() == stoi(idToMatch))
             {
-                msg += it.getId() +"\t"+ it.getHeaders()+ "\t"+it.getMsg() +"\t" + it.getTime() + "\n";
+                msg += it.getId() + "\t" + it.getHeaders() + "\t" + it.getMsg() + "\t" + it.getTime() + "\n";
             }
         }
         msg += "<" + username + ">: ";
@@ -911,14 +961,14 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
     else if (command == "deletemail")
     {
         string username = socket_user_map[client];
-        User& user =  allUsersInfo[username];
+        User &user = allUsersInfo[username];
         string idToMatch = tokens[1];
         vector<Mail> mails = user.getMail();
 
         auto it = std::find_if(mails.begin(), mails.end(), [&](const Mail &mail)
                                { return mail.getId() == stoi(idToMatch); });
 
-        string msg ="";
+        string msg = "";
         if (it != mails.end())
         {
             mails.erase(it);
@@ -928,7 +978,7 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
         }
         else
         {
-            msg +=  "Message with ID " + idToMatch + " not found. \n";
+            msg += "Message with ID " + idToMatch + " not found. \n";
         }
         msg += "<" + username + ">: ";
         sendMsg(client, msg);
@@ -938,8 +988,8 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
         string mailTo = tokens[1];
         string message = tokens[2];
         string userFrom = socket_user_map[client];
-        User& user =  allUsersInfo[userFrom];
-        user.setIsSendingMsg(true);
+        User &user = allUsersInfo[userFrom];
+        user.setIsSendingMsg();
         int randomId = generateRandomNumber();
         Mail mail = Mail(randomId, userFrom, "", "unread", getTimeNow(), message);
         mail.to = mailTo;
@@ -947,13 +997,14 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
         user.draft = mail;
         sendMsg(client, msg);
     }
-    else if(command == "." && tokens.size() == 1){
+    else if (command == "." && tokens.size() == 1)
+    {
         // send the mail now
-        User& user = allUsersInfo[socket_user_map[client]];
-        Mail& mail = user.draft;
+        User &user = allUsersInfo[socket_user_map[client]];
+        Mail &mail = user.draft;
         mail.setMsg(draftMsg);
         int toClient = user_socket_map[mail.to];
-        string msg = "You have received a new mail from: " + user.getUsername() + "\n" + mail.getHeaders() +"\t" + mail.getTime();
+        string msg = "You have received a new mail from: " + user.getUsername() + "\n" + mail.getHeaders() + "\t" + mail.getTime();
         sendMsg(toClient, msg);
         sendEmptyMsg(toClient);
 
@@ -962,13 +1013,12 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
         sendEmptyMsg(client);
 
         draftMsg = "";
-        user.setIsSendingMsg(false);
-
+        user.setIsSendingMsg();
     }
     else if (command == "info")
     {
         string info = tokens[1];
-        User& user = allUsersInfo[socket_user_map[client]];
+        User &user = allUsersInfo[socket_user_map[client]];
 
         user.info = info;
         string msg = "Info updated!";
@@ -978,16 +1028,15 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
     else if (command == "passwd")
     {
         string username = socket_user_map[client];
-        User& user =  allUsersInfo[username];
+        User &user = allUsersInfo[username];
         user.setPassword(tokens[1]);
-        string msg = "Password changed successfully! \n <"+username+">: ";
+        string msg = "Password changed successfully! \n <" + username + ">: ";
         sendMsg(client, msg);
     }
     else if (command == "help" || command == "?")
     {
         sendMsg(client, manual);
         sendEmptyMsg(client);
-    
     }
     else if (is_empty_msg && !user.getIsSendingMsg())
     {
@@ -995,54 +1044,60 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
         string msg = oss.str();
         sendMsg(client, msg);
     }
-    else if(
+    else if (
         command == "A1" || command == "A2" || command == "A3" ||
         command == "B1" || command == "B2" || command == "B3" ||
         command == "C1" || command == "C2" || command == "C3"
-    
-    ){
+
+    )
+    {
         string currentUser = socket_user_map[client];
-        User& user =  allUsersInfo[currentUser];
+        User &user = allUsersInfo[currentUser];
         string msg = "";
-        TicTacToe& game = all_games[user.currentGameId];
+        TicTacToe &game = all_games[user.currentGameId];
         string user1 = game.user1;
         string user2 = game.user2;
-        User& usr1 = allUsersInfo[user1];
+        User &usr1 = allUsersInfo[user1];
         // cout << "User1 playing is "<< usr1.getUsername() << " "<<usr1.getIsPlaying() << endl;
 
-        User& usr2 = allUsersInfo[user2];
+        User &usr2 = allUsersInfo[user2];
         // cout << "User2 playing is "<< usr2.getUsername() << " "<<usr2.getIsPlaying() << endl;
 
-        if (!user.getIsPlaying()){
+        if (!user.getIsPlaying())
+        {
             msg += "Invalid command! You are not currently playing a game";
             sendMsg(client, msg);
         }
         int indexToUpdate = getIndex(tokens[0]);
         game.board[indexToUpdate] = user.moveName;
         string userToMove = user1;
-        if (currentUser == user1) {
+        if (currentUser == user1)
+        {
             userToMove = user2;
         }
         int opponentClient = user_socket_map[userToMove];
-        bool isGameWon  = game.checkGameWon(user.moveName);
+        bool isGameWon = game.checkGameWon(user.moveName);
         cout << "game won is " << isGameWon << endl;
-        if (isGameWon){
+        if (isGameWon)
+        {
             string msg = user_name + " has won the game =============== \n";
-            cout<<msg<<endl;
+            cout << msg << endl;
             msg += game.displayBoard();
             sendMsg(client, msg);
             sendMsg(opponentClient, msg);
-            if(user_name == usr1.getUsername()){
+            if (user_name == usr1.getUsername())
+            {
                 // Usr1 has won
-                usr1.setWins(usr1.getWins()+1);
-                usr1.setPoints(usr1.getPoints()+3);
-                usr2.setLoss(usr1.getLoss()+1);
+                usr1.setWins(usr1.getWins() + 1);
+                usr1.setPoints(usr1.getPoints() + 3);
+                usr2.setLoss(usr1.getLoss() + 1);
             }
-            else{
+            else
+            {
                 // Usr2 has won
-                usr2.setWins(usr2.getWins()+1);
-                usr2.setPoints(usr2.getPoints()+3);
-                usr1.setLoss(usr1.getLoss()+1);
+                usr2.setWins(usr2.getWins() + 1);
+                usr2.setPoints(usr2.getPoints() + 3);
+                usr1.setLoss(usr1.getLoss() + 1);
             }
             usr1.setIsPlaying(false);
             usr1.opponent = "";
@@ -1050,8 +1105,8 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
             usr2.setIsPlaying(false);
             usr2.opponent = "";
 
-            usr2.setTotalGames(usr2.getTotalGames()+1);
-            usr1.setTotalGames(usr1.getTotalGames()+1);
+            usr2.setTotalGames(usr2.getTotalGames() + 1);
+            usr1.setTotalGames(usr1.getTotalGames() + 1);
         }
 
         string message = "User to move: " + userToMove + "\n";
@@ -1064,20 +1119,19 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
     }
     else
     {
-        User& user = allUsersInfo[socket_user_map[client]];
-        if(user.getIsSendingMsg()){
+        User &user = allUsersInfo[socket_user_map[client]];
+        if (user.getIsSendingMsg())
+        {
             // do nothing. user is typing the message
             draftMsg += received_data + "\n";
         }
-        else{
+        else
+        {
             string msg = "Command not suppported!!";
             sendMsg(client, msg);
-
         }
     }
 }
-
-
 
 void GameServer::handleEmptyMsg(int &client)
 {
@@ -1162,7 +1216,7 @@ void GameServer::sendMsg(int &client, string &msg)
 void GameServer::sendEmptyMsg(int &client)
 {
     string username = socket_user_map[client];
-    string msg += "<"+username+">: ";
+    string msg = "\n<" + username + ">: ";
     if (send(client, msg.c_str(), msg.length(), 0) < 0)
     {
         std::cerr << "Send failed" << std::endl;
@@ -1189,7 +1243,7 @@ string GameServer::getOnlineUsers()
 
 // User GameServer::getUser(string username) {} // stats [name]
 
-User& GameServer::registerUser(string username, string password, bool isGuest)
+User &GameServer::registerUser(string username, string password, bool isGuest)
 {
     User usr = User();
     if (isGuest == false)

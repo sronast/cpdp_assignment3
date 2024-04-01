@@ -22,6 +22,8 @@ public:
     string next_move;
     vector<int> observers;
     vector<string> comments;
+    int user1Time;
+    int user2Time;
 
 
     TicTacToe();
