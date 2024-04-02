@@ -824,7 +824,13 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
     {
         string usrname = socket_user_map[client];
         string msg = usrname + " shouted a message \n";
-        msg += tokens[1];
+        for(auto it: tokens){
+            if (it == command){
+                continue;
+            }
+            msg+=it + " ";
+        }
+
         for (const auto it : socket_user_map)
         {
             int clientId = it.first;
@@ -846,10 +852,10 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
                 sendMsg(clientId, msg);
                 sendEmptyMsg(clientId);
             }
-            string msg = "Shouted to everyone!! \n<" + username + ">";
-            sendMsg(client, msg);
             // sendEmptyMsg(client);
         }
+        string msg = "Shouted to everyone!! \n<" + usrname + ">";
+        sendMsg(client, msg);
     }
     else if (command == "tell")
     {
@@ -861,7 +867,7 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
             {
                 continue;
             }
-            message += it;
+            message += it + " ";
         }
         string userFrom = socket_user_map[client];
 
@@ -916,6 +922,8 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
 
         sendMsg(user2Client, msg);
         sendEmptyMsg(user2Client);
+
+        sendEmptyMsg(client);
 
         game.comments.push_back(msg);
     }
@@ -1106,7 +1114,11 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
     }
     else if (command == "info")
     {
-        string info = tokens[1];
+        string info = "";
+        for (auto it: tokens){
+            if (it == command) continue;
+            info += it + " ";
+        }
         User &user = allUsersInfo[socket_user_map[client]];
 
         user.info = info;
@@ -1156,6 +1168,7 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
         {
             msg += "Invalid command! You are not currently playing a game";
             sendMsg(client, msg);
+            sendEmptyMsg(client);
             return;
         }
         cout << "Next move is " << game.next_move << endl;
@@ -1203,6 +1216,11 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
             sendMsg(opponentClient, msg);
             sendEmptyMsg(client);
             sendEmptyMsg(opponentClient);
+
+            for (auto it: game.observerSet){
+                sendMsg(it, msg);
+                sendEmptyMsg(it);
+            }
             if (user_name == usr1.getUsername())
             {
                 // Usr1 has won
@@ -1235,6 +1253,10 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
             sendMsg(opponentClient, msg2);
             sendEmptyMsg(client);
             sendEmptyMsg(opponentClient);
+            for (auto it: game.observerSet){
+                sendMsg(it, msg2);
+                sendEmptyMsg(it);
+            }
             usr1.setPoints(usr1.getPoints() + 1);
             usr1.setDraw(usr1.getDraw() + 1);
             usr2.setPoints(usr2.getPoints() + 1);
