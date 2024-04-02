@@ -551,7 +551,8 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
         int gameNumber = stoi(gameToObserve);
         user.gameObserving = gameNumber;
         TicTacToe &game = all_games[gameNumber];
-        game.observers.push_back(client);
+        game.observerSet.insert(client);
+        // game.observers.push_back(client);
         string msg = "Oberving game: " + gameToObserve + ". You will now receive updates when moves are made or someone comments";
         sendMsg(client, msg);
         sendEmptyMsg(client);
@@ -561,11 +562,18 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
         string username = socket_user_map[client];
         User &user = allUsersInfo[username];
         TicTacToe &game = all_games[user.gameObserving];
-        game.observers.erase(remove(game.observers.begin(), game.observers.end(), user.gameObserving), game.observers.end());
-        user.gameObserving = 0;
-        string msg = "Removed game from observing";
-        sendMsg(client, msg);
-        sendEmptyMsg(client);
+        if (game.observerSet.find(client) != game.observerSet.end())
+        {
+            game.observerSet.erase(client);
+            user.gameObserving = 0;
+            string msg = "Removed game from observing";
+            sendMsg(client, msg);
+            sendEmptyMsg(client);
+        }
+        else{
+            sendEmptyMsg(client);
+        }
+        
     }
     else if (command == "match")
     {
@@ -814,8 +822,8 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
     }
     else if (command == "shout")
     {
-        string username = socket_user_map[client];
-        string msg = username + " shouted a message";
+        string usrname = socket_user_map[client];
+        string msg = usrname + " shouted a message \n";
         msg += tokens[1];
         for (const auto it : socket_user_map)
         {
@@ -831,17 +839,16 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
             {
                 cout << "Block list: " << it << endl;
             }
-            auto its = find(userBlockList.begin(), userBlockList.end(), username);
-            bool userInBlockList = its != userBlockList.end();
-            cout << "User in block list " << userInBlockList << endl;
-
-            if (!usr.getQuietMode() && !userInBlockList)
+            bool isUserBlocked = isItemInSet(usrname, usr.blockListSet);
+            if (!usr.getQuietMode() && !isUserBlocked)
             {
                 // only send message when the user is not in quiet mode and has not blocked the user
                 sendMsg(clientId, msg);
+                sendEmptyMsg(clientId);
             }
             string msg = "Shouted to everyone!! \n<" + username + ">";
             sendMsg(client, msg);
+            // sendEmptyMsg(client);
         }
     }
     else if (command == "tell")
@@ -864,12 +871,20 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
         vector<Message> userMessages = user.getMessages();
         userMessages.push_back(msg);
         user.setMessages(userMessages);
-        string msgTo = "You have recieved a new message from " + userFrom + "\n Message: " + message + "\t Time: " + msg.getTime() + "\n <" + user.getUsername() + ">";
-        int messageToClient = user_socket_map[messageTo];
-        string usern = socket_user_map[client];
-        sendMsg(messageToClient, msgTo);
-        string meroChak = "\n<" + usern + ">";
-        sendMsg(client, meroChak);
+
+        if(!isItemInSet(userFrom, user.blockListSet)){
+            // dont send message if in block list
+            string msgTo = "You have recieved a new message from " + userFrom + "\n Message: " + message + "\t Time: " + msg.getTime() + "\n <" + user.getUsername() + ">";
+            int messageToClient = user_socket_map[messageTo];
+            string usern = socket_user_map[client];
+            sendMsg(messageToClient, msgTo);
+            string meroChak = "\n<" + usern + ">";
+            sendMsg(client, meroChak);
+        }
+        else{
+            sendEmptyMsg(client);
+        }
+
     }
     else if (command == "kibitz" || command == "'")
     {
@@ -925,10 +940,17 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
         string username = socket_user_map[client];
         string userToBlock = tokens[1];
         User &user = allUsersInfo[username];
-        vector<string> blockList = user.getBlockList();
-        blockList.push_back(userToBlock);
-        user.setBlockList(blockList);
-        string msg = userToBlock + " has been added to block list! \n <" + username + ">:";
+        cout << "Username is "<< user.getUsername() << endl;
+
+        user.blockListSet.insert(userToBlock);
+        // vector<string> blockList = user.getBlockList();
+        // blockList.push_back(userToBlock);
+        // user.setBlockList(blockList);
+        for (auto it: user.blockListSet){
+            cout << "Blocked user:"<< it << endl;
+        }
+        cout << "eta samma" << endl;
+        string msg = userToBlock + " has been added to block list! \n<" + username + ">:";
         sendMsg(client, msg);
     }
     else if (command == "unblock")
@@ -936,26 +958,18 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
         string username = socket_user_map[client];
         string userToUnblock = tokens[1];
         User &user = allUsersInfo[username];
-        vector<string> blockList = user.getBlockList();
-
-        // Find the position of userToUnblock in the blockList vector
-        auto it = std::find(blockList.begin(), blockList.end(), userToUnblock);
-        if (it != blockList.end())
-        {
-            // If userToUnblock is found, erase it from the blockList vector
-            blockList.erase(it);
-            // Update the block list in the user object
-            user.setBlockList(blockList);
-            // Update the user in the allUsersInfo map
-            allUsersInfo[username] = user;
+        string msg = "";
+        if(isItemInSet(userToUnblock, user.blockListSet)){
+            user.blockListSet.erase(userToUnblock);
+            msg += userToUnblock + " has been removed from the block list";
+            
         }
-        else
-        {
-            // Handle case where userToUnblock is not found in the block list
-            cout << "User " << userToUnblock << " is not in the block list." << endl;
+        else{
+            msg += userToUnblock + " is not in the block list";
         }
-        string msg = userToUnblock + " has been removed from block list! \n <" + username + ">:";
         sendMsg(client, msg);
+        sendEmptyMsg(client);
+        
     }
     else if (command == "listmail")
     {
@@ -997,7 +1011,7 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
         {
             if (it.getId() == stoi(idToMatch))
             {
-                msg += it.getId() + "\t" + it.getHeaders() + "\t" + it.getMsg() + "\t" + it.getTime() + "\n";
+                msg += to_string(it.getId()) + "\t" + it.getHeaders() + "\t" + it.getMsg() + "\t" + it.getTime() + "\n";
             }
         }
         msg += "<" + username + ">: ";
@@ -1182,7 +1196,7 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
         cout << "game won is " << isGameWon << endl;
         if (isGameWon)
         {
-            string msg = user_name + " has won the game =============== \n";
+            string msg = "\n"+user_name + " has won the game =============== \n";
             cout << msg << endl;
             msg += game.displayBoard();
             sendMsg(client, msg);
@@ -1214,7 +1228,7 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
         }
         else if (isGameDraw)
         {
-            string msg2 = "Game has ended in a draw!";
+            string msg2 = "\nGame has ended in a draw!";
             cout << msg << endl;
             msg += game.displayBoard();
             sendMsg(client, msg2);
@@ -1236,10 +1250,10 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
         }
         else
         {
-            string message = "User to move: " + userToMove + "\n";
+            string message = "\nUser to move: " + userToMove + "\n";
 
             string updatedBoard = game.displayBoard();
-            message += updatedBoard + "\n";
+            message +="\n" + updatedBoard;
 
             sendMsg(client, message);
             sendEmptyMsg(client);
@@ -1248,6 +1262,15 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
         }
         // update the next move
         game.next_move = game.next_move == user1 ? user2 : user1;
+
+        // send update to all the observers too 
+        string msg3 = "\n"+currentUser + " moved: " + command + "\n";
+        msg3 += game.displayBoard();
+        for (auto it: game.observerSet){
+            sendMsg(it, msg3);
+            sendEmptyMsg(it);
+        }
+
     }
     else
     {

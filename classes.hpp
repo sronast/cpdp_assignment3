@@ -80,7 +80,6 @@ private:
     std::vector<Message> messages;
     std::vector<Mail> mail;
     bool quietMode;
-    std::vector<std::string> blockList;
     int rank;
     int points;
     int totalGames;
@@ -98,6 +97,9 @@ public:
     string draftMessage;
     string draftHeader;
     string mailTo;
+    vector<string> blockList; // deprecated
+    unordered_set<string> blockListSet;
+
     // Constructor
     User();
     User(const User& other);

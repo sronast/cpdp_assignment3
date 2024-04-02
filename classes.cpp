@@ -315,5 +315,6 @@ User::User(const User& other) {
     draftMessage = other.draftMessage;
     draftHeader = other.draftHeader;
     mailTo = other.mailTo;
+    blockListSet = other.blockListSet;
 }
 // Game::

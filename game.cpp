@@ -23,9 +23,7 @@ TicTacToe::TicTacToe(const TicTacToe& other){
     columnMap = other.columnMap;
     observers = other.observers;
     comments=other.comments;
-    
-
-    
+    observerSet = other.observerSet;
 }
 
 void TicTacToe::resetBoard()
