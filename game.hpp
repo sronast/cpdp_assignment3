@@ -39,6 +39,8 @@ public:
     bool makeMove(char column, int row, char symbol);
 
     bool checkGameWon(string symbol);
+
+    void startTimerForCurrentPlayer();
 };
 
 #endif
