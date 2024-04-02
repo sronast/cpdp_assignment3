@@ -854,8 +854,8 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
             }
             // sendEmptyMsg(client);
         }
-        string msg = "Shouted to everyone!! \n<" + usrname + ">";
-        sendMsg(client, msg);
+        string msg4 = "Shouted to everyone!! \n<" + usrname + ">";
+        sendMsg(client, msg4);
     }
     else if (command == "tell")
     {
@@ -875,10 +875,11 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
         // int randomId = generateRandomNumber(1000, 9999);
         Message msg = Message(userFrom, message, "read", getTimeNow());
         vector<Message> userMessages = user.getMessages();
+        bool isUserInQuietMode = user.getQuietMode();
         userMessages.push_back(msg);
         user.setMessages(userMessages);
 
-        if(!isItemInSet(userFrom, user.blockListSet)){
+        if(!isItemInSet(userFrom, user.blockListSet) && !isUserInQuietMode){
             // dont send message if in block list
             string msgTo = "You have recieved a new message from " + userFrom + "\n Message: " + message + "\t Time: " + msg.getTime() + "\n <" + user.getUsername() + ">";
             int messageToClient = user_socket_map[messageTo];
