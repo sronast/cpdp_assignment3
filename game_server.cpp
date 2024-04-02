@@ -132,12 +132,14 @@ username (guest):)";
                         else if (key == "messages")
                         {
                             // Parse messages
+                            // cout << "parsing messages" << endl;
                             std::vector<Message> messages = user.parseMessage(value);
                             user.setMessages(messages);
                         }
                         else if (key == "mail")
                         {
                             // Parse mail
+                            // cout << "parsing mail" << endl;
                             std::vector<Mail> mail = user.parseMail(value);
                             user.setMail(mail);
                         }
@@ -149,6 +151,7 @@ username (guest):)";
                         else if (key == "blockList")
                         {
                             // Parse blockList
+                            // cout << "parsing block list" << endl;
                             std::vector<std::string> blockList = user.parseBlockList(value);
                             user.setBlockList(blockList);
                         }
@@ -243,12 +246,13 @@ void GameServer::handleConnections()
 {
     while (true)
     {
-        cout << "again in the server\n";
+        // cout << "again in the server\n";
         // select is destructive, so make a copy
         ready_sockets = all_sockets;
         int socket_count;
         if ((socket_count = select(maxfd + 1, &ready_sockets, NULL, NULL, NULL)) < 0)
         {
+            // cout << "Select error" << endl;
             handleConnectionError("Select error!!");
         }
 
@@ -323,8 +327,6 @@ bool GameServer::acceptNewConnection()
 
 bool GameServer::handleClient(int client) // For handling different client inputs
 {
-    // cout << "input from the client: " << client << endl;
-
     int msg_size;
     char buffer[2048];
     bzero(&buffer, 2048);
@@ -338,28 +340,36 @@ bool GameServer::handleClient(int client) // For handling different client input
     {
         cout << t << endl;
     }
-
-    string command = tokens[0];
-    cout << "Command is: " << command << endl;
-    // cout << "=============== " << endl;
-
     bool is_empty_msg = (received_data[0] == '\n' || received_data[0] == '\r');
+    if (tokens.size() > 0)
+    {
 
-    // Client tries to log in
-    if (not_logged_in.find(client) != not_logged_in.end())
-    {
-        cout << "In login" << endl;
-        handleLogin(client, is_empty_msg, tokens, command, received_data);
+        string command = tokens[0];
+        cout << "Command is: " << command << endl;
+        // cout << "=============== " << endl;
+
+        // Client tries to log in
+        if (not_logged_in.find(client) != not_logged_in.end())
+        {
+            cout << "In login" << endl;
+            handleLogin(client, is_empty_msg, tokens, command, received_data);
+        }
+        // The client is guest
+        else if (active_guests.find(client) != active_guests.end())
+        {
+            handleGuest(client, is_empty_msg, tokens, command, received_data);
+        }
+        // The client is registered user
+        else
+        {
+            handleRegisteredUser(client, is_empty_msg, tokens, command, received_data);
+        }
     }
-    // The client is guest
-    else if (active_guests.find(client) != active_guests.end())
+    else if (is_empty_msg)
     {
-        handleGuest(client, is_empty_msg, tokens, command, received_data);
-    }
-    // The client is registered user
-    else
-    {
-        handleRegisteredUser(client, is_empty_msg, tokens, command, received_data);
+        cout << "empty message" << endl;
+        string emptyCommand = "";
+        handleLogin(client, is_empty_msg, tokens, emptyCommand, received_data);
     }
 
     // handle the cases where the client is the registererd user
@@ -1253,6 +1263,8 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
 
             usr2.setTotalGames(usr2.getTotalGames() + 1);
             usr1.setTotalGames(usr1.getTotalGames() + 1);
+            updateRank();
+            saveAllData();
         }
         else if (isGameDraw)
         {
@@ -1280,6 +1292,8 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
 
             usr2.setTotalGames(usr2.getTotalGames() + 1);
             usr1.setTotalGames(usr1.getTotalGames() + 1);
+            updateRank();
+            saveAllData();
         }
         else
         {
@@ -1502,4 +1516,122 @@ bool GameServer::isUserRegistered(string &user)
         return true;
     }
     return false;
+}
+
+string putQuotes(string msg)
+{
+    return "\"" + msg + "\"";
+}
+
+void GameServer::saveAllData()
+{
+    for (auto &userPair : allUsersInfo)
+    {
+        string username = userPair.first;
+        User &user = userPair.second;
+
+        // Construct the file path for the user's file
+        std::string filePath = "users/" + username + ".txt";
+
+        // Open the file for writing
+        std::ofstream outputFile(filePath, ofstream::trunc);
+
+        // Check if the file was opened successfully
+        if (outputFile.is_open())
+        {
+            // Write user data to the file
+            outputFile << "username: " << user.getUsername() << std::endl;
+            outputFile << "password: " << user.getPassword() << std::endl;
+            outputFile << "wins: " << user.getWins() << endl;
+            outputFile << "loss: " << user.getLoss() << endl;
+            outputFile << "draw: " << user.getDraw() << endl;
+            outputFile << "isPlaying: " << user.getIsPlaying() << endl;
+            string messages = "";
+            // Message::Message(const std::__1::string &from, const std::__1::string &msg, const std::__1::string &status, const std::__1::string &time)
+            for (Message it : user.getMessages())
+            {
+                cout << "put quotes" << putQuotes(it.from) << endl;
+                messages += "{" + putQuotes(it.from) + "," + putQuotes(it.msg) + "," + putQuotes(it.status) + "," + putQuotes(it.time) + "},";
+            }
+            string msgToSave = "{}"; 
+            if (!messages.empty()){
+                messages.pop_back();
+                msgToSave = "{" + messages + "}";
+
+            }
+            cout << "msg to save is :" << msgToSave << endl;
+
+            outputFile << "messages: " << msgToSave << endl;
+
+            string mails = "";
+            // int m_id, std::__1::string m_from, std::__1::string m_msg, std::__1::string m_status, std::__1::string m_time, std::__1::string m_header)
+            for (auto it : user.getMail())
+            {
+                cout << "it msg" << it.msg << endl;
+                // string msgr = it.msg.replace('\n',' ');
+                it.msg.replace(it.msg.begin(), it.msg.end(), '\n',' ');
+                mails += "{"+to_string(it.id)+","+ putQuotes(it.from)+ ","+putQuotes(it.msg)+","+putQuotes(it.status)+","+putQuotes(it.time)+","+putQuotes(it.header)+"},";
+            }
+            string mailToSave = "{}";
+            if(!mails.empty()){
+                mails.pop_back();
+                mailToSave = "{" + mails + "}";
+
+            }
+            cout << "mail to save is :" << mailToSave << endl;
+
+            outputFile << "mail: " << mailToSave << endl;
+            outputFile << "quietMode: " << user.getQuietMode() << endl;
+            string blockedUsers = "";
+            for (auto b : user.blockListSet)
+            {
+                blockedUsers += putQuotes(b) + ",";
+            }
+            string blockedUsersToSave = "{}";
+            if (!blockedUsers.empty()){
+                blockedUsers.pop_back();
+                blockedUsersToSave = "{" + blockedUsers + "}";
+            }
+            cout << "block to save is :" << blockedUsersToSave << endl;
+            outputFile << "blockList: " << blockedUsersToSave << endl;
+            outputFile << "rank: " << user.getRank() << endl;
+            outputFile << "points: " << user.getPoints() << endl;
+            outputFile << "totalGames: " << user.getTotalGames() << endl;
+
+            // Close the file
+            outputFile.close();
+        }
+        else
+        {
+            // Handle file open error
+            std::cerr << "Error opening file: " << filePath << std::endl;
+        }
+    }
+}
+
+void GameServer::updateRank()
+{
+    std::vector<std::pair<int, std::string>> userPoints;
+
+    for (auto& userPair : allUsersInfo) {
+        userPoints.emplace_back(userPair.second.getPoints(), userPair.first);
+    }
+
+    std::sort(userPoints.begin(), userPoints.end(), std::greater<>());
+
+    int rank = 1;
+    for (const auto& [points, username] : userPoints) {
+        allUsersInfo[username].setRank(rank++);
+    }
+
+    std::string filePath = "rank.txt";
+    std::ofstream outputFile(filePath, std::ofstream::trunc);
+    if (outputFile.is_open()) {
+        for (const auto& [points, username] : userPoints) {
+            outputFile << "Username: " << username << ", Points: " << points << ", Rank: " << allUsersInfo[username].getRank() << std::endl;
+        }
+        outputFile.close();
+    } else {
+        std::cerr << "Error opening file: " << filePath << std::endl;
+    }
 }

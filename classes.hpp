@@ -15,13 +15,11 @@ using json = nlohmann::json;
 using namespace std;
 
 class Message {
-private:
+public:
     std::string from;
     std::string msg;
     std::string status;  // "init", "sent", "delivered", "read"
     std::string time;
-
-public:
     // Constructor
     Message(const std::string& from, const std::string& msg, const std::string& status, const std::string& time);
 

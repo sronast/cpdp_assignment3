@@ -62,6 +62,7 @@ private:
     unordered_map<int, string> not_logged_in; //{4: 'user', 5: 'guest'}
     unordered_map<string, string> match_requests;
     unordered_map<string, string> game_settings;
+    unordered_map<string , int > user_rank;
 
 
     //help
@@ -116,6 +117,10 @@ public:
     bool isUserOnline(string &user);
 
     bool isUserRegistered(string &user);
+
+    void saveAllData();
+
+    void updateRank();
 
 
     // vector<string> displayAllUsers(); 

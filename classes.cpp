@@ -96,6 +96,8 @@ std::vector<Message> User::parseMessage(const std::string &messageStr)
         return messages;
     }
     std::string messagesContent = messageStr.substr(1, messageStr.size() - 2);
+    // cout << "message content" << messagesContent << endl;
+    if (messagesContent.empty()) return {};
     messagesContent = messagesContent.substr(1);
     messagesContent.pop_back();
     std::stringstream ss(messagesContent);
