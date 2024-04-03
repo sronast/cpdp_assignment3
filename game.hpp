@@ -23,8 +23,9 @@ public:
     vector<int> observers;
     unordered_set<int> observerSet;
     vector<string> comments;
-    int user1Time;
-    int user2Time;
+    double user1Time;
+    double user2Time;
+    time_t previousMoveTime;
 
 
     TicTacToe();

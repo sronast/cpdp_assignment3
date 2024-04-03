@@ -201,7 +201,6 @@ username (guest):)";
 
 void GameServer::start()
 {
-    cout << "lalo\n";
     setupServer();
     cout << "server setup complete...\n"
          << endl;
@@ -217,8 +216,8 @@ void GameServer::setupServer()
 
     bzero(&server_address, sizeof(server_address));
     server_address.sin_family = AF_INET;
-    server_address.sin_addr.s_addr = inet_addr("127.0.0.1"); // htonl(INADDR_ANY);
-    // server_address.sin_addr.s_addr = INADDR_ANY;  // htonl(INADDR_ANY);
+    // server_address.sin_addr.s_addr = inet_addr("127.0.0.1"); // htonl(INADDR_ANY);
+    server_address.sin_addr.s_addr = INADDR_ANY;  // htonl(INADDR_ANY);
     server_address.sin_port = htons(server_port); // Server port
 
     // Bind socket to the address
@@ -531,8 +530,9 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
         oss << "Stats for: " << userNameToView << ": \n"
             << "\nInfo: " << user.info
             << "\nWins: " << user.getWins()
-            << "\n Loss: " << user.getLoss()
-            << "\n Draws: " << user.getDraw();
+            << "\nLoss: " << user.getLoss()
+            << "\nDraws: " << user.getDraw()
+            <<"\nPoints: "<<user.getPoints();
         std::string msg = oss.str();
         sendMsg(client, msg);
         sendEmptyMsg(client);
@@ -592,7 +592,7 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
         string opponent_name = tokens[1];
         string blackOrWhite = tokens[2];
         string timeStr = tokens[3];
-        int time = stoi(timeStr);
+        // int gameTime = stoi(timeStr);
 
         User &opponent = allUsersInfo[opponent_name];
         int opponet_fd = user_socket_map[opponent_name];
@@ -690,8 +690,11 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
                     cout << "Game init" << endl;
                     // create a new instance of game
                     TicTacToe game = TicTacToe(user_name, opponent_name);
-                    game.user1Time = stoi(settings[1]);
-                    game.user2Time = stoi(settings[1]);
+                    game.user1Time = stod(settings[1]);
+                    game.user2Time = stod(settings[1]);
+
+                    // time_t t1 = time(0);
+                    game.previousMoveTime = time(0);
 
                     user.currentGameId = game.id;
                     user.moveName = "X";
@@ -771,28 +774,19 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
         {
             int gameId = user.currentGameId;
             TicTacToe &game = all_games[gameId];
-            int opponentClient = 0;
-            user.setTotalGames(user.getTotalGames() + 1);
-            user.setLoss(user.getLoss() + 1);
-            User opponent;
-            // end the game as loss
+
+            string winner = game.user1;
+
             if (game.user1 == username)
             {
                 // current player is user 1
                 // get the other user
-                opponent = allUsersInfo[game.user2];
-                opponentClient = user_socket_map[game.user2];
+                winner = game.user2;
             }
-            else
-            {
-                // current player is user 2
-                // get the other user
-                opponent = allUsersInfo[game.user1];
-                opponentClient = user_socket_map[game.user1];
-            }
-            opponent.setTotalGames(user.getTotalGames() + 1);
-            opponent.setWins(user.getWins() + 1);
-            opponent.setPoints(user.getPoints() + 3);
+            User &opponent = allUsersInfo[game.user2];
+            int opponentClient = user_socket_map[game.user2];
+
+            gameWon(winner, game, opponentClient,client,user,opponent);
 
             string userMsg = "You have lost the game!";
             sendMsg(client, userMsg);
@@ -809,7 +803,6 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
                 sendMsg(it, observerMsg);
                 sendEmptyMsg(it);
             }
-
             // remove the game
             all_games.erase(gameId);
         }
@@ -1192,6 +1185,8 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
         }
         cout << "Next move is " << game.next_move << endl;
         cout << "current user name is " << currentUser << endl;
+        
+
         if (game.next_move != currentUser)
         {
             string msg1 = "It is not your turn. Wait for your turn";
@@ -1208,13 +1203,50 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
             sendEmptyMsg(client);
             return;
         }
-        game.board[indexToUpdate] = user.moveName;
+        
         string userToMove = user1;
+        int opponentClient = user_socket_map[userToMove];
+
+        time_t currentTime = time(0);
+        double time_diff = difftime(currentTime, game.previousMoveTime);
+        game.previousMoveTime = currentTime;
+
         if (currentUser == user1)
         {
             userToMove = user2;
+            opponentClient = user_socket_map[userToMove];
+       
+            if(time_diff>game.user1Time){
+                cout<<"Your timer has already been expired....You lost the game";
+                string mmssgg = currentUser + " time has been expired\n";
+                sendMsg(client, mmssgg);
+                //call fuction to end the game
+                gameWon(userToMove, game, opponentClient,client,usr2,usr1);
+                return;
+            }
+            else{
+                game.user1Time = game.user1Time -time_diff;
+            }
+            
         }
-        int opponentClient = user_socket_map[userToMove];
+        else{
+            // 
+            if(time_diff>game.user2Time){
+                cout<<"Your timer has already been expired....You lost the game";
+                string mmssgg = currentUser + " time has been expired\n";
+                sendMsg(client, mmssgg);
+                gameWon(userToMove, game, client, opponentClient,usr2,usr1);
+                return;
+                //call fuction to end the game
+            }
+            else{
+                game.user2Time = game.user2Time -time_diff;
+            }
+        }
+
+        
+        game.board[indexToUpdate] = user.moveName;
+        
         bool isGameWon = game.checkGameWon(user.moveName);
         bool isGameDraw = true;
         for (auto it : game.board)
@@ -1228,6 +1260,7 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
         cout << "game won is " << isGameWon << endl;
         if (isGameWon)
         {
+<<<<<<< Updated upstream
             string msg = "\n" + user_name + " has won the game =============== \n";
             cout << msg << endl;
             msg += game.displayBoard();
@@ -1265,6 +1298,9 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
             usr1.setTotalGames(usr1.getTotalGames() + 1);
             updateRank();
             saveAllData();
+=======
+            gameWon(user_name, game, client, opponentClient, usr1, usr2);
+>>>>>>> Stashed changes
         }
         else if (isGameDraw)
         {
@@ -1336,6 +1372,46 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
             sendEmptyMsg(client);
         }
     }
+}
+
+void GameServer::gameWon(std::string &user_name, TicTacToe &game, int &client, int &opponentClient, User &usr1, User &usr2)
+{
+    string msg = "\n" + user_name + " has won the game =============== \n";
+    cout << msg << endl;
+    msg += game.displayBoard();
+    sendMsg(client, msg);
+    sendMsg(opponentClient, msg);
+    sendEmptyMsg(client);
+    sendEmptyMsg(opponentClient);
+
+    for (auto it : game.observerSet)
+    {
+        sendMsg(it, msg);
+        sendEmptyMsg(it);
+    }
+    if (user_name == usr1.getUsername())
+    {
+        // Usr1 has won
+        usr1.setWins(usr1.getWins() + 1);
+        usr1.setPoints(usr1.getPoints() + 3);
+        usr2.setLoss(usr1.getLoss() + 1);
+    }
+    else
+    {
+        // Usr2 has won
+        usr2.setWins(usr2.getWins() + 1);
+        usr2.setPoints(usr2.getPoints() + 3);
+        usr1.setLoss(usr1.getLoss() + 1);
+    }
+    usr1.setIsPlaying(false);
+    usr1.opponent = "";
+
+    usr2.setIsPlaying(false);
+    usr2.opponent = "";
+
+    usr2.setTotalGames(usr2.getTotalGames() + 1);
+    usr1.setTotalGames(usr1.getTotalGames() + 1);
+    all_games.erase(usr1.currentGameId);
 }
 
 void GameServer::handleEmptyMsg(int &client)
