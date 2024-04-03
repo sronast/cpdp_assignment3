@@ -201,7 +201,7 @@ username (guest):)";
                 {
                     cout << "user has moved" << endl;
                 }
-                allUsersInfo.insert(make_pair(username, move(user)));
+                allUsersInfo.insert(make_pair(username, std::move(user)));
                 cout << "All user info ma insert gardai 222....." << endl;
                 all_users.insert(username);
                 cout << "insert ni garyo" << endl;
@@ -1270,7 +1270,7 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
             }
             else
             {
-                game.user1Time = game.user1Time - time_diff;
+                game.user1Time = game.user1Time - time_diff; 
             }
         }
         else
