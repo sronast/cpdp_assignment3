@@ -16,7 +16,7 @@ string trim(const string &str)
 
     return str.substr(start, end - start + 1);
 }
-int getMaxSet(unordered_set<int> &mySet){
+int getMaxSet(set<int> &mySet){
     int maxElement = *(mySet.begin()); // Initialize maxElement with the first element
 
     for (int elem : mySet) {
@@ -45,7 +45,7 @@ vector<string> tokenize(string &data, const char &delimeter)
     return tokens;
 }
 
-bool isItemInSet(string &item, unordered_set<string> &mySet){
+bool isItemInSet(string &item, set<string> &mySet){
     if (mySet.find(item) != mySet.end())
     {
         return true;

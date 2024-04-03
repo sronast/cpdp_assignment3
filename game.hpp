@@ -21,7 +21,7 @@ public:
     string user2;
     string next_move;
     vector<int> observers;
-    unordered_set<int> observerSet;
+    set<int> observerSet;
     vector<string> comments;
     double user1Time;
     double user2Time;

@@ -68,35 +68,33 @@ public:
 
 
 class User {
-private:
+public:
     std::string username;
     std::string password;
     int wins;
     int loss;
     int draw;
     int isPlaying;
-    std::vector<Message> messages;
-    std::vector<Mail> mail;
+    // std::vector<Message> messages;
+    // std::vector<Mail> mail;
     int quietMode;
     int rank;
     int points;
     int totalGames;
     int isSendingMessage;
-
-public:
     string opponent;
-    unordered_set<string> request_from;
-    unordered_set<string> request_to;
+    set<string> request_from;
+    set<string> request_to;
     int currentGameId;
     string moveName = "";
     int gameObserving;
     string info;
-    Mail draft;
+    // Mail draft;
     string draftMessage;
     string draftHeader;
     string mailTo;
     vector<string> blockList; // deprecated
-    unordered_set<string> blockListSet;
+    set<string> blockListSet;
 
     // Constructor
     User();
@@ -125,11 +123,11 @@ public:
     void setIsSendingMsg();
     int getIsSendingMsg() const;
 
-    void setMessages(const std::vector<Message>& messages);
-    std::vector<Message> getMessages() const;
+    // void setMessages(const std::vector<Message>& messages);
+    // std::vector<Message> getMessages() const;
 
-    void setMail(const std::vector<Mail>& mail);
-    std::vector<Mail> getMail() const;
+    // void setMail(const std::vector<Mail>& mail);
+    // std::vector<Mail> getMail() const;
 
     void setQuietMode(int quietMode);
     int getQuietMode() const;

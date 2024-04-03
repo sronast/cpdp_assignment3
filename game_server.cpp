@@ -17,8 +17,8 @@ void handleAlarm(int sig)
 GameServer::GameServer(int port)
 {
 
-    signal(SIGALRM, handleAlarm);
-    alarm(10);
+    // signal(SIGALRM, handleAlarm);
+    // alarm(10);
 
     server_port = port;
     init_message = R"(      
@@ -144,14 +144,14 @@ username (guest):)";
                             // Parse messages
                             // cout << "parsing messages" << endl;
                             std::vector<Message> messages = user.parseMessage(value);
-                            user.setMessages(messages);
+                            allUserMessages[username] = messages;
                         }
                         else if (key == "mail")
                         {
                             // Parse mail
                             // cout << "parsing mail" << endl;
                             std::vector<Mail> mail = user.parseMail(value);
-                            user.setMail(mail);
+                            allUserMails[username] = mail;
                         }
                         else if (key == "quietMode")
                         {
@@ -191,7 +191,7 @@ username (guest):)";
                 cout << "User object heram password: " << user.getPassword() << endl;
                 // cout << "User object heram password" << user.isVa() << endl;
                 // allUsersInfo[username] = user;
-                
+
                 cout << "All user info ma insert gardai....." << endl;
                 allUsersInfo.insert(make_pair(username, user));
                 cout << "All user info ma insert gardai 222....." << endl;
@@ -268,8 +268,8 @@ void GameServer::handleConnections()
             {
                 // saveAllData();
                 // Interrupted system call
-                printf("Select interrupted by signal, can decide to retry or handle differently\n");
-                continue;
+                // printf("Select interrupted by signal, can decide to retry or handle differently\n");
+                // continue;
             }
             handleConnectionError("Select error!!");
         }
@@ -468,10 +468,10 @@ void GameServer::handleGuest(int &client, bool &is_empty_msg, vector<string> &to
     {
         string username = tokens[1];
         string password = tokens[2];
-        bool register_vayota = registerUser(username, password, true);
-        cout<<"Register vayo........"<<endl;
+        int register_vayota = registerUser(username, password, true);
+        cout << "Register vayo........" << endl;
         string msg = "";
-        if (register_vayota)
+        if (register_vayota == 0)
         {
             cout << "User registration failed \n";
             msg = "\tUser registration failed \n";
@@ -902,10 +902,12 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
         User &user = allUsersInfo[messageTo];
         // int randomId = generateRandomNumber(1000, 9999);
         Message msg = Message(userFrom, message, "read", getTimeNow());
-        vector<Message> userMessages = user.getMessages();
+        vector<Message> userMessages =  allUserMessages[user.username];
+        // vector<Message> userMessages =  user.getMessages();
         bool isUserInQuietMode = user.getQuietMode();
         userMessages.push_back(msg);
-        user.setMessages(userMessages);
+        allUserMessages[user.username] = userMessages;
+        // user.setMessages(userMessages);
 
         if (!isItemInSet(userFrom, user.blockListSet) && !isUserInQuietMode)
         {
@@ -1014,7 +1016,8 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
     {
         string username = socket_user_map[client];
         User &user = allUsersInfo[username];
-        vector<Mail> mails = user.getMail();
+        vector<Mail> mails = allUserMails[username];
+        // vector<Mail> mails = user.getMail();
         if (mails.size() == 0)
         {
             string msg1 = "You have no mails!";
@@ -1043,7 +1046,7 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
         string username = socket_user_map[client];
         User &user = allUsersInfo[username];
         string idToMatch = tokens[1];
-        vector<Mail> mails = user.getMail();
+        vector<Mail> mails = allUserMails[username];
         cout << "in read mail: \n";
         string msg = "Message: \n";
         for (const auto it : mails)
@@ -1061,7 +1064,7 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
         string username = socket_user_map[client];
         User &user = allUsersInfo[username];
         string idToMatch = tokens[1];
-        vector<Mail> mails = user.getMail();
+        vector<Mail> mails = allUserMails[username];
 
         auto it = std::find_if(mails.begin(), mails.end(), [&](const Mail &mail)
                                { return mail.getId() == stoi(idToMatch); });
@@ -1070,7 +1073,8 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
         if (it != mails.end())
         {
             mails.erase(it);
-            user.setMail(mails);
+            // user.setMail(mails);
+            allUserMails[username] = mails;
             allUsersInfo[username] = user;
             msg += "Message deleted successfully. \n";
         }
@@ -1129,9 +1133,11 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
         cout << "TO: " << toUser.getUsername();
 
         string msg = "You have received a new mail from: " + user.getUsername() + "\n" + mail.getHeaders() + "\t" + mail.getTime();
-        vector<Mail> userMails = toUser.getMail();
+        vector<Mail> userMails = allUserMails[toUser.username];
+        // vector<Mail> userMails = toUser.getMail();
         userMails.push_back(mail);
-        toUser.setMail(userMails);
+        allUserMails[toUser.username] = userMails;
+        // toUser.setMail(userMails);
 
         sendMsg(toClient, msg);
         sendEmptyMsg(toClient);
@@ -1282,7 +1288,8 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
         }
         cout << "game won is " << isGameWon << endl;
         string boardOnly = "\nboard: ";
-        for(auto it: game.board){
+        for (auto it : game.board)
+        {
             boardOnly += it + ",";
         }
         boardOnly.pop_back();
@@ -1413,9 +1420,9 @@ void GameServer::gameWon(std::string &user_name, TicTacToe &game, int &client, i
     usr1.setTotalGames(usr1.getTotalGames() + 1);
     updateRank();
     saveAllData();
-    cout<<"\n\nErase aghai..."<<endl;
+    cout << "\n\nErase aghai..." << endl;
     all_games.erase(usr1.currentGameId);
-    cout<<"\n\nErase paxi..."<<endl;
+    cout << "\n\nErase paxi..." << endl;
 }
 
 void GameServer::handleEmptyMsg(int &client)
@@ -1528,12 +1535,12 @@ string GameServer::getOnlineUsers()
 
 // User GameServer::getUser(string username) {} // stats [name]
 
-bool GameServer::registerUser(string username, string password, bool isGuest)
+int GameServer::registerUser(string username, string password, bool isGuest)
 {
     if (isGuest == false)
     {
         cout << "Only guest can register as new user" << endl;
-        return false;
+        return 0;
     }
     User usr = User();
     std::string filename = "users/" + username + ".txt";
@@ -1541,44 +1548,39 @@ bool GameServer::registerUser(string username, string password, bool isGuest)
     if (!userFile.is_open())
     {
         std::cerr << "Error creating user file." << std::endl;
-        return false;
+        return 0;
     }
     // Write user data to file
     userFile << "username: " << username << "\n";
     userFile << "password: " << password << "\n";
-    userFile << "isPlaying: false\n";
+    userFile << "isPlaying: 0\n";
     userFile << "wins: 0\n";
     userFile << "loss: 0\n";
     userFile << "draw: 0\n";
     userFile << "message: {}\n";
     userFile << "mail: {}\n";
-    userFile << "quietMode: false\n";
+    userFile << "quietMode: 0\n";
     userFile << "blockList: {}\n";
     userFile << "rank: 0\n";
     userFile << "points: 0\n";
     userFile << "totalGames: 0\n";
     userFile.close();
 
-    usr.setUsername(username);
-    usr.setPassword(password);
-    usr.setIsPlaying(0);
-    usr.setWins(0);
-    usr.setDraw(0);
-    usr.setLoss(0);
-    usr.setRank(0);
-    usr.setPoints(0);
-    usr.setPoints(0);
-    usr.setMail({});
-    usr.setMessages({});
-    usr.setBlockList({});
-    usr.setQuietMode(0);
-    cout<<"===========Laamoooo==========="<<endl;
+    // usr.setUsername(username);
+    // usr.setPassword(password);
+    usr.username = username;
+    usr.password = password;
+    allUserMails[username] = std::vector<Mail>();
+    allUserMessages[username] = std::vector<Message>();
+    cout << "===========Laamoooo===========" << endl;
     all_users.insert(username);
-    cout<<"===========Laamoooo===========111111===="<<endl;
-    allUsersInfo[username] = usr;
-    cout<<"===========Laamoooo===========222222===="<<endl;
+    cout << "===========Laamoooo===========111111====" << username << endl;
+    allUsersInfo.insert(make_pair(username, usr));
+    cout << "===========Laamoooo===========222222====" << endl;
 
-    return true;
+    cout << "Is online: " << isUserOnline(username) << endl;
+    cout << "Aba ta register vayo hai" << endl;
+    return 1;
     // return usr.registerUser(username, password);
 }
 
@@ -1632,7 +1634,8 @@ void GameServer::saveAllData()
             outputFile << "isPlaying: " << user.getIsPlaying() << endl;
             string messages = "";
             // Message::Message(const std::__1::string &from, const std::__1::string &msg, const std::__1::string &status, const std::__1::string &time)
-            for (Message it : user.getMessages())
+            // for (Message it : user.getMessages())
+            for (Message it : allUserMessages[user.username])
             {
                 cout << "put quotes" << putQuotes(it.from) << endl;
                 messages += "{" + putQuotes(it.from) + "," + putQuotes(it.msg) + "," + putQuotes(it.status) + "," + putQuotes(it.time) + "},";
@@ -1649,7 +1652,8 @@ void GameServer::saveAllData()
 
             string mails = "";
             // int m_id, std::__1::string m_from, std::__1::string m_msg, std::__1::string m_status, std::__1::string m_time, std::__1::string m_header)
-            for (auto it : user.getMail())
+            // for (auto it : user.getMail())
+            for (auto it : allUserMails[user.username])
             {
                 cout << "it msg" << it.msg << endl;
                 // string msgr = it.msg.replace('\n',' ');
@@ -1692,7 +1696,7 @@ void GameServer::saveAllData()
             std::cerr << "Error opening file: " << filePath << std::endl;
         }
     }
-    cout<<"\n\nAll data pani save vayo hai\n\n";
+    cout << "\n\nAll data pani save vayo hai\n\n";
 }
 
 void GameServer::updateRank()
@@ -1726,5 +1730,5 @@ void GameServer::updateRank()
     {
         std::cerr << "Error opening file: " << filePath << std::endl;
     }
-    cout<<"\n\nRank pani save vayo hai\n\n";
+    cout << "\n\nRank pani save vayo hai\n\n";
 }

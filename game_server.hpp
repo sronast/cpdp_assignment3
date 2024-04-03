@@ -3,8 +3,8 @@
 
 #include <string>
 #include <vector>
-#include <unordered_set>
-#include <unordered_map>
+#include <map>
+#include<set>
 #include <iostream>
 #include <numeric>
 #include <fstream>
@@ -48,19 +48,23 @@ private:
     int max_allowed_connections = 4;
     
     // Game
-    unordered_map<int, TicTacToe> all_games;
+    map<int, TicTacToe> all_games;
     // game
 
-    unordered_map<string, User> allUsersInfo;
-    unordered_set<int> active_connections;
-    unordered_set<string> all_users;
-    unordered_set<int> active_guests;
-    unordered_map<int, string> socket_user_map; //{4: User()}
-    unordered_map<string, int> user_socket_map; //{'leo': 4} do not save guest here
-    unordered_map<int, string> not_logged_in; //{4: 'user', 5: 'guest'}
-    unordered_map<string, string> match_requests;
-    unordered_map<string, string> game_settings;
-    unordered_map<string , int > user_rank;
+    map<string, User> allUsersInfo;
+    
+    map<string, vector<Message>> allUserMessages;
+    map<string, vector<Mail>> allUserMails;
+
+    set<int> active_connections;
+    set<string> all_users;
+    set<int> active_guests;
+    map<int, string> socket_user_map; //{4: User()}
+    map<string, int> user_socket_map; //{'leo': 4} do not save guest here
+    map<int, string> not_logged_in; //{4: 'user', 5: 'guest'}
+    map<string, string> match_requests;
+    map<string, string> game_settings;
+    map<string , int > user_rank;
 
 
     //help
@@ -68,7 +72,7 @@ private:
     string manual;
 
     //game
-    unordered_set<string> supported_commands;
+    set<string> supported_commands;
     // server should save:
     
     // 1. Socket maintaining connection for each active user
@@ -80,17 +84,12 @@ private:
 
 public:
     GameServer(int port);
-    // GameServer();
-
+ 
     void start();
 
     void setupServer();
 
     void handleConnections();
-
-    // ALarmhandler
-    
-
     
     void handleLogin(int &client, bool &is_empty_msg, vector<string> &tokens, string &command, string &received_data);
 
@@ -136,9 +135,11 @@ public:
 
     // User getUser(string username);  // stats [name]
 
-    bool registerUser(string username, string password, bool isGuest);
+    int registerUser(string username, string password, bool isGuest);
 
     // bool loginUser(string username, string password);
+    int regHelp(string username, string filename);
+    
 };
 
 // void handleAlarm(int sig);

@@ -15,29 +15,34 @@
 // }
 
 // Constructor
-User::User() : wins(0), loss(0), draw(0), isPlaying(false), quietMode(false), rank(0), points(0), totalGames(0)
+User::User() :username(""),password(""),wins(0), loss(0), draw(0), isPlaying(0),\
+  quietMode(0), rank(0), points(0), totalGames(0), isSendingMessage(0), request_from{},\
+  request_to{}, currentGameId(0), moveName(""), gameObserving(0), info(""), draftMessage(""),\
+  draftHeader(""), mailTo(""), blockListSet{}, blockList()
+
+
 {
-    isSendingMessage = false;
-    setIsPlaying(false);
-    setWins(0);
-    setLoss(0);
-    setDraw(0);
-    setQuietMode(false);
-    setRank(0);
-    setPoints(0);
-    setTotalGames(0);
-    setUsername("");
-    setPassword("");
-    setIsPlaying(false);
-    opponent="";
-    request_from={};
-    request_to={};
-    currentGameId=0;
-    moveName = "";
-    setMessages({});
-    setMail({});
-    setBlockList({});
-    blockListSet={};
+    // isSendingMessage = 0;
+    // setIsPlaying(0);
+    // setWins(0);
+    // setLoss(0);
+    // setDraw(0);
+    // setQuietMode(0);
+    // setRank(0);
+    // setPoints(0);
+    // setTotalGames(0);
+    // setUsername("");
+    // setPassword("");
+    // setIsPlaying(0);
+    // opponent="";
+    // // request_from={};
+    // // request_to={};
+    // currentGameId=0;
+    // moveName = "";
+    // setMessages({});
+    // setMail({});
+    // setBlockList({});
+    // blockListSet={};
 
 }
 
@@ -67,18 +72,15 @@ void User::setDraw(int draw) { this->draw = draw; }
 int User::getDraw() const { return draw; }
 
 void User::setIsPlaying(int isPlaying) { 
-    cout<<"Is set paly: "<<isPlaying<<endl;
+
     this->isPlaying = isPlaying; }
 int User::getIsPlaying() const { return isPlaying; }
 
-void User::setMessages(const std::vector<Message> &messages) { this->messages = messages; }
-std::vector<Message> User::getMessages() const { return messages; }
-
-void User::setMail(const std::vector<Mail> &mail) { this->mail = mail; }
-std::vector<Mail> User::getMail() const { return mail; }
+// void User::setMail(const std::vector<Mail> &mail) { this->mail = mail; }
+// std::vector<Mail> User::getMail() const { return mail; }
 
 void User::setQuietMode(int quietMode) { 
-    cout<<"\nQM: "<<quietMode<<endl;
+
     this->quietMode = quietMode; }
 int User::getQuietMode() const { return quietMode; }
 
@@ -306,8 +308,6 @@ User::User(const User& other) {
     loss = other.loss;
     draw = other.draw;
     isPlaying = other.isPlaying;
-    messages = other.messages;
-    mail = other.mail;
     quietMode = other.quietMode;
     rank = other.rank;
     points = other.points;
@@ -320,7 +320,7 @@ User::User(const User& other) {
     moveName = other.moveName;
     gameObserving = other.gameObserving;
     info = other.info;
-    draft = other.draft;
+    // draft = other.draft;
     draftMessage = other.draftMessage;
     draftHeader = other.draftHeader;
     mailTo = other.mailTo;
