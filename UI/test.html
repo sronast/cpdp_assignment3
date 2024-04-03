@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tic-Tac-Toe Game</title>
+    <!-- Include Tailwind CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+
+<body class="bg-gray-100 h-screen flex flex-col justify-center items-center">
+    <h1 class="text-3xl font-bold mb-4">Tic-Tac-Toe Game</h1>
+    <div class="mb-4">
+        <input type="text" id="command"
+            class="border border-gray-300 rounded-md p-2 mr-2 focus:outline-none focus:border-blue-500"
+            placeholder="Enter Telnet command">
+        <button id="send-btn"
+            class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+            Send
+        </button>
+
+    </div>
+    <p class="hidden text-sm text-green-500" id ="username"></p>
+
+    <div id="board" class="hidden mb-4"></div>
+    <div id="output" class="border border-gray-300 p-4 rounded-lg max-w-md overflow-y-auto"
+        style="max-height: 200px;"></div>
+        <div id="toast" class="fixed bottom-0 right-0 mb-4 mr-4 bg-green-500 text-white p-4 rounded shadow-md hidden">
+        </div>
+
+    <script>
+        const ws = new WebSocket('ws://localhost:3000');
+        const output = document.getElementById('output');
+        const commandInput = document.getElementById('command');
+        const sendButton = document.getElementById('send-btn');
+        const board = document.getElementById("board");
+
+        ws.onopen = function () {
+            console.log('Connected to server');
+        };
+
+        ws.onmessage = function (event) {
+            if (event.data === "true") {
+                board.style.display = "block";
+            } else if (event.data.includes("board")) {
+                let splittedResponse = event.data.split('\n');
+                let board = "";
+                splittedResponse.forEach(x => {
+                    if (x.startsWith('board')) {
+                        board = x;
+                    }
+                })
+                let boardText = board.split(':')[1].trim();
+                const boardList = boardText.split(',');
+                boardList.forEach((e, index) => {
+                    let buttonId = getId(index);
+                    let button = document.getElementById(buttonId);
+                    button.classList.add('w-16', 'h-16', 'bg-white', 'border', 'border-gray-300', 'rounded-md', 'focus:outline-none', 'hover:bg-gray-100', 'transition', 'duration-200');
+                    if (e === 'X') {
+                        button.textContent = 'X';
+                        button.disabled = true;
+                    } else if (e == 'O') {
+                        button.textContent = 'O';
+                        button.disabled = true;
+                    }
+                })
+
+            }
+            if (event.data.includes("has won the game")){
+                let splittedResponse = event.data.split('\n');
+                let msg = "";
+                splittedResponse.forEach(x => {
+                    if (x.includes('has won the game')) {
+                        msg = x;
+                    }
+                })
+                const toast = document.getElementById('toast');
+                toast.textContent = msg; // Set the toast message
+                toast.classList.remove('hidden'); // Show the toast
+                setTimeout(() => {
+                    toast.classList.add('hidden'); // Hide the toast after a delay (e.g., 5 seconds)
+                }, 5000); // Adjust the delay as needed
+            }
+            if(event.data.includes('<')){
+                let splittedResponse = event.data.split('\n');
+                let msg = "";
+                splittedResponse.forEach(x => {
+                    if (x.includes('<')) {
+                        const match = x.match(/<(.*?)>/);
+                        const txt = match ? match[1] : '';
+                        msg = txt;
+                    }
+                })
+                let p = document.getElementById('username');
+                p.innerText="logged in as: "+ msg;
+                p.classList.remove('hidden');
+
+            }
+            // Replace newline characters with HTML line breaks
+            output.innerHTML += event.data + '<br>';
+            output.scrollTop = output.scrollHeight; // Auto-scroll to bottom
+        };
+
+        ws.onerror = function (error) {
+            console.error('WebSocket error:', error);
+        };
+
+        ws.onclose = function () {
+            console.log('Disconnected from server');
+        };
+
+        sendButton.addEventListener('click', function () {
+            const command = commandInput.value.trim();
+            if (command) {
+                ws.send(command);
+                commandInput.value = ''; // Clear input field
+            }
+        });
+
+        // Prevent page reload on WebSocket close
+        window.addEventListener('beforeunload', function (event) {
+            event.preventDefault();
+            ws.close();
+        });
+
+        function getId(index) {
+            if (index === 0) {
+                return "A1";
+            } else if (index === 1) {
+                return "A2";
+            } else if (index === 2) {
+                return "A3";
+            } else if (index === 3) {
+                return "B1";
+            } else if (index === 4) {
+                return "B2";
+            } else if (index === 5) {
+                return "B3";
+            } else if (index === 6) {
+                return "C1";
+            } else if (index === 7) {
+                return "C2";
+            } else if (index === 8) {
+                return "C3";
+            } else {
+                // Handle invalid index
+                return "Invalid index";
+            }
+        }
+
+        function createTicTacToeBoard() {
+            const boardContainer = document.getElementById('board');
+
+            for (let row = 0; row < 3; row++) {
+                for (let col = 0; col < 3; col++) {
+                    const button = document.createElement('button');
+                    button.textContent = '-';
+                    button.classList.add('w-16', 'h-16', 'bg-white', 'border', 'border-gray-300', 'rounded-md', 'focus:outline-none', 'hover:bg-gray-100', 'transition', 'duration-200');
+                    let rowText = "";
+                    let colText = "";
+                    if (row == 0) {
+                        rowText = "A";
+                    } else if (row == 1) {
+                        rowText = "B";
+                    } else {
+                        rowText = "C";
+                    }
+                    if (col == 0) {
+                        colText = "1";
+                    } else if (col == 1) {
+                        colText = "2";
+                    } else {
+                        colText = "3";
+                    }
+                    button.setAttribute('data-row', rowText);
+                    button.setAttribute('id', rowText + colText);
+                    button.setAttribute('data-col', colText);
+                    button.addEventListener('click', () => {
+                        const move = button.getAttribute('data-row') + button.getAttribute('data-col');
+                        ws.send(move);
+                    });
+                    boardContainer.appendChild(button);
+                }
+                boardContainer.appendChild(document.createElement('br'));
+            }
+        }
+
+
+        createTicTacToeBoard();
+    </script>
+</body>
+
+</html>
