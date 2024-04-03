@@ -17,8 +17,8 @@ void handleAlarm(int sig)
 GameServer::GameServer(int port)
 {
 
-    // signal(SIGALRM, handleAlarm);
-    // alarm(10);
+    signal(SIGALRM, handleAlarm);
+    alarm(10);
 
     server_port = port;
     init_message = R"(      
@@ -193,11 +193,13 @@ username (guest):)";
                 // allUsersInfo[username] = user;
 
                 cout << "All user info ma insert gardai....." << endl;
-                if (!user.username.empty()){
+                if (!user.username.empty())
+                {
                     cout << "User still exists" << user.username << endl;
                 }
-                else{
-                    cout << "user has moved" <<endl;
+                else
+                {
+                    cout << "user has moved" << endl;
                 }
                 allUsersInfo.insert(make_pair(username, move(user)));
                 cout << "All user info ma insert gardai 222....." << endl;
@@ -272,10 +274,9 @@ void GameServer::handleConnections()
             // cout << "Select error" << endl;
             if (errno == EINTR)
             {
-                // saveAllData();
-                // Interrupted system call
-                // printf("Select interrupted by signal, can decide to retry or handle differently\n");
-                // continue;
+                printf("Saving all data\n");
+                saveAllData();
+                continue;
             }
             handleConnectionError("Select error!!");
         }
@@ -448,6 +449,9 @@ void GameServer::handleLogin(int &client, bool &is_empty_msg, vector<string> &to
             oss << "Successfully logged in..\n <" << usr_name << ">:";
             string msg = oss.str();
             sendMsg(client, msg);
+            msg = "User Info: " + usr.info;
+            sendMsg(client, msg);
+            sendEmptyMsg(client);
         }
         else
         {
@@ -460,6 +464,7 @@ void GameServer::handleLogin(int &client, bool &is_empty_msg, vector<string> &to
 void GameServer::handleGuest(int &client, bool &is_empty_msg, vector<string> &tokens,
                              string &command, string &received_data)
 {
+    cout << "The command is :" << command << endl;
     if (is_empty_msg)
     {
         handleEmptyMsg(client);
@@ -486,10 +491,10 @@ void GameServer::handleGuest(int &client, bool &is_empty_msg, vector<string> &to
         {
             cout << "User registered \n";
             msg = "User registered \n";
-            socket_user_map[client] = username;
+            // socket_user_map[client] = username;
         }
         sendMsg(client, msg);
-        sendEmptyMsg(client);
+        // sendEmptyMsg(client);
         // handle user regsitration
     }
     else
@@ -543,6 +548,11 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
         string allOnlineUsers = getOnlineUsers();
         sendMsg(client, allOnlineUsers);
         sendEmptyMsg(client);
+    }
+    else if (command == "exit" || command == "quit")
+    {
+        string msg = "Bye Bye...\n";
+        handleClientExit(client, msg);
     }
     else if (command == "stats")
     {
@@ -646,7 +656,7 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
         }
         else
         {
-            
+
             cout << "opponent name is " << opponent_name << endl;
 
             auto it = match_requests.find(user_name);
@@ -838,11 +848,14 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
             sendMsg(client, msg);
             sendEmptyMsg(client);
         }
-        TicTacToe &game = all_games[currentGame];
-        string msg = "Game refreshed! \n";
-        msg += game.displayBoard();
-        sendMsg(client, msg);
-        sendEmptyMsg(client);
+        else
+        {
+            TicTacToe &game = all_games[currentGame];
+            string msg = "Game refreshed! \n";
+            msg += game.displayBoard();
+            sendMsg(client, msg);
+            sendEmptyMsg(client);
+        }
     }
     else if (command == "shout")
     {
@@ -900,7 +913,7 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
         User &user = allUsersInfo[messageTo];
         // int randomId = generateRandomNumber(1000, 9999);
         Message msg = Message(userFrom, message, "read", getTimeNow());
-        vector<Message> userMessages =  allUserMessages[user.username];
+        vector<Message> userMessages = allUserMessages[user.username];
         // vector<Message> userMessages =  user.getMessages();
         bool isUserInQuietMode = user.getQuietMode();
         userMessages.push_back(msg);
@@ -1046,12 +1059,15 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
         string idToMatch = tokens[1];
         vector<Mail> mails = allUserMails[username];
         cout << "in read mail: \n";
-        string msg = "Message: \n";
+        string msg = "======Reading Mail=====";
         for (const auto it : mails)
         {
             if (it.getId() == stoi(idToMatch))
             {
-                msg += to_string(it.getId()) + "\t" + it.getHeaders() + "\t" + it.getMsg() + "\t" + it.getTime() + "\n";
+                msg = msg + "\nFrom: "+ it.from +"\nID: " + to_string(it.getId()) + "\nHeader: "+it.getHeaders();
+                msg = msg + "\nMessage: "+ it.getMsg() + "\nTime: "+ it.getTime() + "\n";
+                break;
+                // msg += to_string(it.getId()) + "\t" + it.getHeaders() + "\t" + it.getMsg() + "\t" + it.getTime() + "\n";
             }
         }
         msg += "<" + username + ">: ";
@@ -1094,6 +1110,7 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
                 continue;
             }
             header += it;
+            header += " ";
         }
         string userFrom = socket_user_map[client];
         User &user = allUsersInfo[userFrom];
@@ -1173,6 +1190,7 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
     }
     else if (command == "help" || command == "?")
     {
+        cout << "Command is help!!\n\n";
         sendMsg(client, manual);
         sendEmptyMsg(client);
     }
@@ -1237,12 +1255,13 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
 
         if (currentUser == user1)
         {
+            cout << "============User to move changed...........\n";
             userToMove = user2;
             opponentClient = user_socket_map[userToMove];
 
             if (time_diff > game.user1Time)
             {
-                cout << "Your timer has already been expired....You lost the game";
+                cout << "Your timer has already been expired....You lost the game...from if";
                 string mmssgg = currentUser + " time has been expired\n";
                 sendMsg(client, mmssgg);
                 // call fuction to end the game
@@ -1259,7 +1278,7 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
             //
             if (time_diff > game.user2Time)
             {
-                cout << "Your timer has already been expired....You lost the game";
+                cout << "Your timer has already been expired....You lost the game...from else";
                 string mmssgg = currentUser + " time has been expired\n";
                 sendMsg(client, mmssgg);
                 gameWon(userToMove, game, client, opponentClient, usr2, usr1);
@@ -1299,6 +1318,7 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
             sendMsg(opponentClient, boardOnly);
             sendEmptyMsg(client);
             sendEmptyMsg(opponentClient);
+            return;
         }
         else if (isGameDraw)
         {
@@ -1362,6 +1382,8 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
     }
     else
     {
+        cout << "In last else\n\n"
+             << endl;
         User &user = allUsersInfo[socket_user_map[client]];
         if (user.getIsSendingMsg())
         {
@@ -1576,7 +1598,7 @@ int GameServer::registerUser(string username, string password, bool isGuest)
     allUsersInfo.insert(make_pair(username, usr));
     cout << "===========Laamoooo===========222222====" << endl;
 
-    cout << "Is online: " << isUserOnline(username) << endl;
+    // cout << "Is online: " << isUserOnline(username) << endl;
     cout << "Aba ta register vayo hai" << endl;
     return 1;
     // return usr.registerUser(username, password);

@@ -106,6 +106,7 @@ bool TicTacToe::checkGameWon(string symbol)
 
     return false; // No winning pattern found
 }
+TicTacToe::~TicTacToe() {cout<<"Destructor game...\n";}
 
 // TicTacToe& TicTacToe::operator=(const TicTacToe& other)
 // {

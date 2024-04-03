@@ -42,6 +42,7 @@ public:
     bool checkGameWon(string symbol);
 
     void startTimerForCurrentPlayer();
+    ~TicTacToe();
 };
 
 #endif

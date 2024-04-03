@@ -22,7 +22,7 @@ public:
     std::string time;
     // Constructor
     Message(const std::string& from, const std::string& msg, const std::string& status, const std::string& time);
-
+    ~Message();
     // Getters and setters for member variables
     std::string getFrom() const;
     void setFrom(const std::string& from);
@@ -48,6 +48,7 @@ public:
     // Constructor
     Mail(int id, string from, string msg, string status, string time, string header);
     Mail();
+    ~Mail();
     // Getters and setters for member variables
     string getFrom() const;
     void setFrom(const string& from);

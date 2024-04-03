@@ -38,7 +38,7 @@ User::User(const User& other) {
     moveName = other.moveName;
     gameObserving = other.gameObserving;
     info = other.info;
-    // draft = other.draft;
+
     draftMessage = other.draftMessage;
     draftHeader = other.draftHeader;
     mailTo = other.mailTo;
@@ -179,6 +179,10 @@ Message::Message(const std::string &from, const std::string &msg, const std::str
     : from(from), msg(msg), status(status), time(time) {}
 
 // Getter and setter for 'from' field
+Message::~Message() {
+    cout << "destructing msg..."<<endl;
+    // No dynamic memory allocation in this class, so nothing to delete
+}
 std::string Message::getFrom() const
 {
     return from;
@@ -234,6 +238,11 @@ Mail::Mail(int m_id,  string m_from,  string m_msg,  string m_status,  string m_
     time = m_time;
     header = m_header;
     cout<<"In mail constructor....\n\n";
+}
+
+Mail::~Mail() {
+    cout << "destructing mail..."<<endl;
+    // No dynamic memory allocation in this class, so nothing to delete
 }
 // Getter and setter for 'from' field
 std::string Mail::getFrom() const
