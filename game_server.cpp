@@ -8,8 +8,18 @@
 
 string draftMsg = "";
 
+void handleAlarm(int sig)
+{
+    // Reset the alarm for another 5 minutes (300 seconds)
+    alarm(10);
+}
+
 GameServer::GameServer(int port)
 {
+
+    signal(SIGALRM, handleAlarm);
+    alarm(10);
+
     server_port = port;
     init_message = R"(      
         
@@ -127,7 +137,7 @@ username (guest):)";
                         }
                         else if (key == "isPlaying")
                         {
-                            user.setIsPlaying(value == "true");
+                            user.setIsPlaying(std::stoi(value));
                         }
                         else if (key == "messages")
                         {
@@ -145,8 +155,8 @@ username (guest):)";
                         }
                         else if (key == "quietMode")
                         {
-                            cout << "QM lado" << endl;
-                            user.setQuietMode(value == "true");
+                            cout << "QM" << endl;
+                            user.setQuietMode(std::stoi(value));
                         }
                         else if (key == "blockList")
                         {
@@ -177,12 +187,14 @@ username (guest):)";
                 cout << "User name is " << username << endl;
                 // Add user to allUsers
 
-                cout << "User object heram" << user.getUsername() << endl;
-                cout << "User object heram password" << user.getPassword() << endl;
+                cout << "User object heram: " << user.getUsername() << endl;
+                cout << "User object heram password: " << user.getPassword() << endl;
                 // cout << "User object heram password" << user.isVa() << endl;
                 // allUsersInfo[username] = user;
+                
+                cout << "All user info ma insert gardai....." << endl;
                 allUsersInfo.insert(make_pair(username, user));
-                cout << "All user info ma insert vayo" << endl;
+                cout << "All user info ma insert gardai 222....." << endl;
                 all_users.insert(username);
                 cout << "insert ni garyo" << endl;
             }
@@ -252,6 +264,13 @@ void GameServer::handleConnections()
         if ((socket_count = select(maxfd + 1, &ready_sockets, NULL, NULL, NULL)) < 0)
         {
             // cout << "Select error" << endl;
+            if (errno == EINTR)
+            {
+                // saveAllData();
+                // Interrupted system call
+                printf("Select interrupted by signal, can decide to retry or handle differently\n");
+                continue;
+            }
             handleConnectionError("Select error!!");
         }
 
@@ -449,9 +468,10 @@ void GameServer::handleGuest(int &client, bool &is_empty_msg, vector<string> &to
     {
         string username = tokens[1];
         string password = tokens[2];
-        User &user = registerUser(username, password, true);
+        bool register_vayota = registerUser(username, password, true);
+        cout<<"Register vayo........"<<endl;
         string msg = "";
-        if (user.getUsername().empty())
+        if (register_vayota)
         {
             cout << "User registration failed \n";
             msg = "\tUser registration failed \n";
@@ -532,7 +552,8 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
             << "\nWins: " << user.getWins()
             << "\nLoss: " << user.getLoss()
             << "\nDraws: " << user.getDraw()
-            <<"\nPoints: "<<user.getPoints();
+            << "\nPoints: " << user.getPoints()
+            << "\nRank: " << user.getRank();
         std::string msg = oss.str();
         sendMsg(client, msg);
         sendEmptyMsg(client);
@@ -786,7 +807,7 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
             User &opponent = allUsersInfo[game.user2];
             int opponentClient = user_socket_map[game.user2];
 
-            gameWon(winner, game, opponentClient,client,user,opponent);
+            gameWon(winner, game, opponentClient, client, user, opponent);
 
             string userMsg = "You have lost the game!";
             sendMsg(client, userMsg);
@@ -1185,7 +1206,6 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
         }
         cout << "Next move is " << game.next_move << endl;
         cout << "current user name is " << currentUser << endl;
-        
 
         if (game.next_move != currentUser)
         {
@@ -1203,7 +1223,7 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
             sendEmptyMsg(client);
             return;
         }
-        
+
         string userToMove = user1;
         int opponentClient = user_socket_map[userToMove];
 
@@ -1215,38 +1235,41 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
         {
             userToMove = user2;
             opponentClient = user_socket_map[userToMove];
-       
-            if(time_diff>game.user1Time){
-                cout<<"Your timer has already been expired....You lost the game";
+
+            if (time_diff > game.user1Time)
+            {
+                cout << "Your timer has already been expired....You lost the game";
                 string mmssgg = currentUser + " time has been expired\n";
                 sendMsg(client, mmssgg);
-                //call fuction to end the game
-                gameWon(userToMove, game, opponentClient,client,usr2,usr1);
+                // call fuction to end the game
+                gameWon(userToMove, game, opponentClient, client, usr2, usr1);
                 return;
             }
-            else{
-                game.user1Time = game.user1Time -time_diff;
+            else
+            {
+                game.user1Time = game.user1Time - time_diff;
             }
-            
         }
-        else{
-            // 
-            if(time_diff>game.user2Time){
-                cout<<"Your timer has already been expired....You lost the game";
+        else
+        {
+            //
+            if (time_diff > game.user2Time)
+            {
+                cout << "Your timer has already been expired....You lost the game";
                 string mmssgg = currentUser + " time has been expired\n";
                 sendMsg(client, mmssgg);
-                gameWon(userToMove, game, client, opponentClient,usr2,usr1);
+                gameWon(userToMove, game, client, opponentClient, usr2, usr1);
                 return;
-                //call fuction to end the game
+                // call fuction to end the game
             }
-            else{
-                game.user2Time = game.user2Time -time_diff;
+            else
+            {
+                game.user2Time = game.user2Time - time_diff;
             }
         }
 
-        
         game.board[indexToUpdate] = user.moveName;
-        
+
         bool isGameWon = game.checkGameWon(user.moveName);
         bool isGameDraw = true;
         for (auto it : game.board)
@@ -1388,7 +1411,11 @@ void GameServer::gameWon(std::string &user_name, TicTacToe &game, int &client, i
 
     usr2.setTotalGames(usr2.getTotalGames() + 1);
     usr1.setTotalGames(usr1.getTotalGames() + 1);
+    updateRank();
+    saveAllData();
+    cout<<"\n\nErase aghai..."<<endl;
     all_games.erase(usr1.currentGameId);
+    cout<<"\n\nErase paxi..."<<endl;
 }
 
 void GameServer::handleEmptyMsg(int &client)
@@ -1501,20 +1528,20 @@ string GameServer::getOnlineUsers()
 
 // User GameServer::getUser(string username) {} // stats [name]
 
-User &GameServer::registerUser(string username, string password, bool isGuest)
+bool GameServer::registerUser(string username, string password, bool isGuest)
 {
-    User usr = User();
     if (isGuest == false)
     {
         cout << "Only guest can register as new user" << endl;
-        return usr;
+        return false;
     }
+    User usr = User();
     std::string filename = "users/" + username + ".txt";
     std::ofstream userFile(filename);
     if (!userFile.is_open())
     {
         std::cerr << "Error creating user file." << std::endl;
-        return usr;
+        return false;
     }
     // Write user data to file
     userFile << "username: " << username << "\n";
@@ -1534,7 +1561,7 @@ User &GameServer::registerUser(string username, string password, bool isGuest)
 
     usr.setUsername(username);
     usr.setPassword(password);
-    usr.setIsPlaying(false);
+    usr.setIsPlaying(0);
     usr.setWins(0);
     usr.setDraw(0);
     usr.setLoss(0);
@@ -1544,10 +1571,14 @@ User &GameServer::registerUser(string username, string password, bool isGuest)
     usr.setMail({});
     usr.setMessages({});
     usr.setBlockList({});
-    usr.setQuietMode(false);
+    usr.setQuietMode(0);
+    cout<<"===========Laamoooo==========="<<endl;
     all_users.insert(username);
+    cout<<"===========Laamoooo===========111111===="<<endl;
     allUsersInfo[username] = usr;
-    return usr;
+    cout<<"===========Laamoooo===========222222===="<<endl;
+
+    return true;
     // return usr.registerUser(username, password);
 }
 
@@ -1606,15 +1637,15 @@ void GameServer::saveAllData()
                 cout << "put quotes" << putQuotes(it.from) << endl;
                 messages += "{" + putQuotes(it.from) + "," + putQuotes(it.msg) + "," + putQuotes(it.status) + "," + putQuotes(it.time) + "},";
             }
-            string msgToSave = "{}"; 
-            if (!messages.empty()){
+            string msgToSave = "{}";
+            if (!messages.empty())
+            {
                 messages.pop_back();
                 msgToSave = "{" + messages + "}";
-
             }
             cout << "msg to save is :" << msgToSave << endl;
 
-            outputFile << "messages: " << msgToSave << endl;
+            outputFile << "message: " << msgToSave << endl;
 
             string mails = "";
             // int m_id, std::__1::string m_from, std::__1::string m_msg, std::__1::string m_status, std::__1::string m_time, std::__1::string m_header)
@@ -1622,14 +1653,14 @@ void GameServer::saveAllData()
             {
                 cout << "it msg" << it.msg << endl;
                 // string msgr = it.msg.replace('\n',' ');
-                it.msg.replace(it.msg.begin(), it.msg.end(), '\n',' ');
-                mails += "{"+to_string(it.id)+","+ putQuotes(it.from)+ ","+putQuotes(it.msg)+","+putQuotes(it.status)+","+putQuotes(it.time)+","+putQuotes(it.header)+"},";
+                it.msg.replace(it.msg.begin(), it.msg.end(), '\n', ' ');
+                mails += "{" + to_string(it.id) + "," + putQuotes(it.from) + "," + putQuotes(it.msg) + "," + putQuotes(it.status) + "," + putQuotes(it.time) + "," + putQuotes(it.header) + "},";
             }
             string mailToSave = "{}";
-            if(!mails.empty()){
+            if (!mails.empty())
+            {
                 mails.pop_back();
                 mailToSave = "{" + mails + "}";
-
             }
             cout << "mail to save is :" << mailToSave << endl;
 
@@ -1641,7 +1672,8 @@ void GameServer::saveAllData()
                 blockedUsers += putQuotes(b) + ",";
             }
             string blockedUsersToSave = "{}";
-            if (!blockedUsers.empty()){
+            if (!blockedUsers.empty())
+            {
                 blockedUsers.pop_back();
                 blockedUsersToSave = "{" + blockedUsers + "}";
             }
@@ -1660,31 +1692,39 @@ void GameServer::saveAllData()
             std::cerr << "Error opening file: " << filePath << std::endl;
         }
     }
+    cout<<"\n\nAll data pani save vayo hai\n\n";
 }
 
 void GameServer::updateRank()
 {
     std::vector<std::pair<int, std::string>> userPoints;
 
-    for (auto& userPair : allUsersInfo) {
+    for (auto &userPair : allUsersInfo)
+    {
         userPoints.emplace_back(userPair.second.getPoints(), userPair.first);
     }
 
     std::sort(userPoints.begin(), userPoints.end(), std::greater<>());
 
     int rank = 1;
-    for (const auto& [points, username] : userPoints) {
+    for (const auto &[points, username] : userPoints)
+    {
         allUsersInfo[username].setRank(rank++);
     }
 
     std::string filePath = "rank.txt";
     std::ofstream outputFile(filePath, std::ofstream::trunc);
-    if (outputFile.is_open()) {
-        for (const auto& [points, username] : userPoints) {
+    if (outputFile.is_open())
+    {
+        for (const auto &[points, username] : userPoints)
+        {
             outputFile << "Username: " << username << ", Points: " << points << ", Rank: " << allUsersInfo[username].getRank() << std::endl;
         }
         outputFile.close();
-    } else {
+    }
+    else
+    {
         std::cerr << "Error opening file: " << filePath << std::endl;
     }
+    cout<<"\n\nRank pani save vayo hai\n\n";
 }

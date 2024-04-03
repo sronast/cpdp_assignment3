@@ -37,6 +37,8 @@ User::User() : wins(0), loss(0), draw(0), isPlaying(false), quietMode(false), ra
     setMessages({});
     setMail({});
     setBlockList({});
+    blockListSet={};
+
 }
 
 // Getters and setters
@@ -56,7 +58,7 @@ void User::setIsSendingMsg()
 {
     isSendingMessage = !isSendingMessage;
 }
-bool User::getIsSendingMsg() const
+int User::getIsSendingMsg() const
 {
     return isSendingMessage;
 }
@@ -64,8 +66,10 @@ bool User::getIsSendingMsg() const
 void User::setDraw(int draw) { this->draw = draw; }
 int User::getDraw() const { return draw; }
 
-void User::setIsPlaying(bool isPlaying) { this->isPlaying = isPlaying; }
-bool User::getIsPlaying() const { return isPlaying; }
+void User::setIsPlaying(int isPlaying) { 
+    cout<<"Is set paly: "<<isPlaying<<endl;
+    this->isPlaying = isPlaying; }
+int User::getIsPlaying() const { return isPlaying; }
 
 void User::setMessages(const std::vector<Message> &messages) { this->messages = messages; }
 std::vector<Message> User::getMessages() const { return messages; }
@@ -73,8 +77,10 @@ std::vector<Message> User::getMessages() const { return messages; }
 void User::setMail(const std::vector<Mail> &mail) { this->mail = mail; }
 std::vector<Mail> User::getMail() const { return mail; }
 
-void User::setQuietMode(bool quietMode) { this->quietMode = quietMode; }
-bool User::getQuietMode() const { return quietMode; }
+void User::setQuietMode(int quietMode) { 
+    cout<<"\nQM: "<<quietMode<<endl;
+    this->quietMode = quietMode; }
+int User::getQuietMode() const { return quietMode; }
 
 void User::setBlockList(const std::vector<std::string> &blockList) { this->blockList = blockList; }
 std::vector<std::string> User::getBlockList() const { return blockList; }
@@ -300,10 +306,9 @@ User::User(const User& other) {
     loss = other.loss;
     draw = other.draw;
     isPlaying = other.isPlaying;
-    messages = other.messages; // shallow copy
-    mail = other.mail; // shallow copy
+    messages = other.messages;
+    mail = other.mail;
     quietMode = other.quietMode;
-    blockList = other.blockList; // shallow copy
     rank = other.rank;
     points = other.points;
     totalGames = other.totalGames;
@@ -313,10 +318,14 @@ User::User(const User& other) {
     request_to = other.request_to;
     currentGameId = other.currentGameId;
     moveName = other.moveName;
+    gameObserving = other.gameObserving;
+    info = other.info;
     draft = other.draft;
     draftMessage = other.draftMessage;
     draftHeader = other.draftHeader;
     mailTo = other.mailTo;
+    blockList = other.blockList;
     blockListSet = other.blockListSet;
 }
+
 // Game::

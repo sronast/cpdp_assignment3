@@ -1,12 +1,12 @@
 username: aa
 password: aa
-isPlaying: false
+isPlaying: 0
 wins: 0
 loss: 0
 draw: 0
 message: {}
 mail: {}
-quietMode: false
+quietMode: 0
 blockList: {}
 rank: 0
 points: 0

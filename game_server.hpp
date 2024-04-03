@@ -33,8 +33,6 @@ using namespace std;
 
 class GameServer {
 // Load all the saved data from the file when the server starts
-
-
 private:
 // Server socket
     int server_port;
@@ -90,6 +88,9 @@ public:
 
     void handleConnections();
 
+    // ALarmhandler
+    
+
     
     void handleLogin(int &client, bool &is_empty_msg, vector<string> &tokens, string &command, string &received_data);
 
@@ -135,9 +136,11 @@ public:
 
     // User getUser(string username);  // stats [name]
 
-    User& registerUser(string username, string password, bool isGuest);
+    bool registerUser(string username, string password, bool isGuest);
 
     // bool loginUser(string username, string password);
 };
+
+// void handleAlarm(int sig);
 
 #endif

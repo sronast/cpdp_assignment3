@@ -74,14 +74,14 @@ private:
     int wins;
     int loss;
     int draw;
-    bool isPlaying;
+    int isPlaying;
     std::vector<Message> messages;
     std::vector<Mail> mail;
-    bool quietMode;
+    int quietMode;
     int rank;
     int points;
     int totalGames;
-    bool isSendingMessage;
+    int isSendingMessage;
 
 public:
     string opponent;
@@ -102,6 +102,7 @@ public:
     User();
     User(const User& other);
 
+
     // Getters and setters
     void setUsername(const std::string& username);
     std::string getUsername() const;
@@ -118,11 +119,11 @@ public:
     void setDraw(int draw);
     int getDraw() const;
 
-    void setIsPlaying(bool isPlaying);
-    bool getIsPlaying() const;
+    void setIsPlaying(int isPlaying);
+    int getIsPlaying() const;
     
     void setIsSendingMsg();
-    bool getIsSendingMsg() const;
+    int getIsSendingMsg() const;
 
     void setMessages(const std::vector<Message>& messages);
     std::vector<Message> getMessages() const;
@@ -130,8 +131,8 @@ public:
     void setMail(const std::vector<Mail>& mail);
     std::vector<Mail> getMail() const;
 
-    void setQuietMode(bool quietMode);
-    bool getQuietMode() const;
+    void setQuietMode(int quietMode);
+    int getQuietMode() const;
 
     void setBlockList(const std::vector<std::string>& blockList);
     std::vector<std::string> getBlockList() const;
