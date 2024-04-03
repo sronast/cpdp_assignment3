@@ -37,8 +37,6 @@ public:
 };
 
 class Mail {
-    
-
 public:
     std::string from;
     std::string msg;
@@ -83,8 +81,6 @@ public:
     int totalGames;
     int isSendingMessage;
     string opponent;
-    set<string> request_from;
-    set<string> request_to;
     int currentGameId;
     string moveName = "";
     int gameObserving;
@@ -93,12 +89,12 @@ public:
     string draftMessage;
     string draftHeader;
     string mailTo;
-    vector<string> blockList; // deprecated
     set<string> blockListSet;
 
     // Constructor
     User();
     User(const User& other);
+    ~User();
 
 
     // Getters and setters
@@ -132,8 +128,6 @@ public:
     void setQuietMode(int quietMode);
     int getQuietMode() const;
 
-    void setBlockList(const std::vector<std::string>& blockList);
-    std::vector<std::string> getBlockList() const;
 
     void setRank(int rank);
     int getRank() const;

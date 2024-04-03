@@ -163,7 +163,7 @@ username (guest):)";
                             // Parse blockList
                             // cout << "parsing block list" << endl;
                             std::vector<std::string> blockList = user.parseBlockList(value);
-                            user.setBlockList(blockList);
+                            // user.setBlockList(blockList);
                         }
                         else if (key == "rank")
                         {
@@ -193,7 +193,13 @@ username (guest):)";
                 // allUsersInfo[username] = user;
 
                 cout << "All user info ma insert gardai....." << endl;
-                allUsersInfo.insert(make_pair(username, user));
+                if (!user.username.empty()){
+                    cout << "User still exists" << user.username << endl;
+                }
+                else{
+                    cout << "user has moved" <<endl;
+                }
+                allUsersInfo.insert(make_pair(username, move(user)));
                 cout << "All user info ma insert gardai 222....." << endl;
                 all_users.insert(username);
                 cout << "insert ni garyo" << endl;
@@ -480,6 +486,7 @@ void GameServer::handleGuest(int &client, bool &is_empty_msg, vector<string> &to
         {
             cout << "User registered \n";
             msg = "User registered \n";
+            socket_user_map[client] = username;
         }
         sendMsg(client, msg);
         sendEmptyMsg(client);
@@ -639,17 +646,8 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
         }
         else
         {
-            bool is_response = isItemInSet(opponent_name, user.request_from);
-            for (const auto it : user.request_from)
-            {
-                cout << "set********: " << it << endl;
-            }
-            for (const auto it : opponent.request_from)
-            {
-                cout << "set 2------: " << it << endl;
-            }
+            
             cout << "opponent name is " << opponent_name << endl;
-            cout << "response is " << is_response << endl;
 
             auto it = match_requests.find(user_name);
             bool malaiRequestAkoXa = it != match_requests.end();
@@ -868,7 +866,7 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
                 continue;
             }
             User &usr = allUsersInfo[username];
-            vector<string> userBlockList = usr.getBlockList();
+            vector<string> userBlockList;
             for (const auto it : userBlockList)
             {
                 cout << "Block list: " << it << endl;

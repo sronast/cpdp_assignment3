@@ -16,36 +16,39 @@
 
 // Constructor
 User::User() :username(""),password(""),wins(0), loss(0), draw(0), isPlaying(0),\
-  quietMode(0), rank(0), points(0), totalGames(0), isSendingMessage(0), request_from{},\
-  request_to{}, currentGameId(0), moveName(""), gameObserving(0), info(""), draftMessage(""),\
-  draftHeader(""), mailTo(""), blockListSet{}, blockList()
-
-
-{
-    // isSendingMessage = 0;
-    // setIsPlaying(0);
-    // setWins(0);
-    // setLoss(0);
-    // setDraw(0);
-    // setQuietMode(0);
-    // setRank(0);
-    // setPoints(0);
-    // setTotalGames(0);
-    // setUsername("");
-    // setPassword("");
-    // setIsPlaying(0);
-    // opponent="";
-    // // request_from={};
-    // // request_to={};
-    // currentGameId=0;
-    // moveName = "";
-    // setMessages({});
-    // setMail({});
-    // setBlockList({});
-    // blockListSet={};
-
+  quietMode(0), rank(0), points(0), totalGames(0), isSendingMessage(0)\
+  , currentGameId(0), moveName(""), gameObserving(0), info(""), draftMessage(""),\
+  draftHeader(""), mailTo(""){
+    blockListSet;
+  }
+User::User(const User& other) {
+    username = other.username;
+    password = other.password;
+    wins = other.wins;
+    loss = other.loss;
+    draw = other.draw;
+    isPlaying = other.isPlaying;
+    quietMode = other.quietMode;
+    rank = other.rank;
+    points = other.points;
+    totalGames = other.totalGames;
+    isSendingMessage = other.isSendingMessage;
+    opponent = other.opponent;
+    currentGameId = other.currentGameId;
+    moveName = other.moveName;
+    gameObserving = other.gameObserving;
+    info = other.info;
+    // draft = other.draft;
+    draftMessage = other.draftMessage;
+    draftHeader = other.draftHeader;
+    mailTo = other.mailTo;
+    blockListSet = other.blockListSet;
 }
 
+User::~User() {
+    cout << "destructing..."<<endl;
+    // No dynamic memory allocation in this class, so nothing to delete
+}
 // Getters and setters
 void User::setUsername(const std::string &username) { this->username = username; }
 std::string User::getUsername() const { return username; }
@@ -84,8 +87,6 @@ void User::setQuietMode(int quietMode) {
     this->quietMode = quietMode; }
 int User::getQuietMode() const { return quietMode; }
 
-void User::setBlockList(const std::vector<std::string> &blockList) { this->blockList = blockList; }
-std::vector<std::string> User::getBlockList() const { return blockList; }
 
 void User::setRank(int rank) { this->rank = rank; }
 int User::getRank() const { return rank; }
@@ -301,31 +302,7 @@ void Ratings::updateRanking(string userId)
 {
     // read from the file and update the ranking
 }
-User::User(const User& other) {
-    username = other.username;
-    password = other.password;
-    wins = other.wins;
-    loss = other.loss;
-    draw = other.draw;
-    isPlaying = other.isPlaying;
-    quietMode = other.quietMode;
-    rank = other.rank;
-    points = other.points;
-    totalGames = other.totalGames;
-    isSendingMessage = other.isSendingMessage;
-    opponent = other.opponent;
-    request_from = other.request_from;
-    request_to = other.request_to;
-    currentGameId = other.currentGameId;
-    moveName = other.moveName;
-    gameObserving = other.gameObserving;
-    info = other.info;
-    // draft = other.draft;
-    draftMessage = other.draftMessage;
-    draftHeader = other.draftHeader;
-    mailTo = other.mailTo;
-    blockList = other.blockList;
-    blockListSet = other.blockListSet;
-}
+
+
 
 // Game::
