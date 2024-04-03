@@ -94,19 +94,21 @@ public:
     void handleLogin(int &client, bool &is_empty_msg, vector<string> &tokens, string &command, string &received_data);
 
     void handleGuest(int &client, bool &is_empty_msg, vector<string> &tokens, string &command, string &received_data);
-    
+
     void handleRegisteredUser(int &client, bool &is_empty_msg, vector<string> &tokens, string &command, string &received_data);
+
+    void gameWon(std::string &user_name, TicTacToe &game, int &client, int &opponentClient, User &usr1, User &usr2);
 
     bool acceptNewConnection();
 
     bool handleClient(int client);
 
-    void handleConnectionError(const char* msg);
+    void handleConnectionError(const char *msg);
 
-    //Handling different messsages
+    // Handling different messsages
 
     void handleEmptyMsg(int &client);
-    
+
     void handleClientExit(int &client, string &msg);
 
     void sendMsg(int &client, string &msg);
