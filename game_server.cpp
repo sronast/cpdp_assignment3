@@ -1258,49 +1258,19 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
             }
         }
         cout << "game won is " << isGameWon << endl;
+        string boardOnly = "\nboard: ";
+        for(auto it: game.board){
+            boardOnly += it + ",";
+        }
+        boardOnly.pop_back();
+        boardOnly += "\n";
         if (isGameWon)
         {
-<<<<<<< Updated upstream
-            string msg = "\n" + user_name + " has won the game =============== \n";
-            cout << msg << endl;
-            msg += game.displayBoard();
-            sendMsg(client, msg);
-            sendMsg(opponentClient, msg);
+            gameWon(user_name, game, client, opponentClient, usr1, usr2);
+            sendMsg(client, boardOnly);
+            sendMsg(opponentClient, boardOnly);
             sendEmptyMsg(client);
             sendEmptyMsg(opponentClient);
-
-            for (auto it : game.observerSet)
-            {
-                sendMsg(it, msg);
-                sendEmptyMsg(it);
-            }
-            if (user_name == usr1.getUsername())
-            {
-                // Usr1 has won
-                usr1.setWins(usr1.getWins() + 1);
-                usr1.setPoints(usr1.getPoints() + 3);
-                usr2.setLoss(usr1.getLoss() + 1);
-            }
-            else
-            {
-                // Usr2 has won
-                usr2.setWins(usr2.getWins() + 1);
-                usr2.setPoints(usr2.getPoints() + 3);
-                usr1.setLoss(usr1.getLoss() + 1);
-            }
-            usr1.setIsPlaying(false);
-            usr1.opponent = "";
-
-            usr2.setIsPlaying(false);
-            usr2.opponent = "";
-
-            usr2.setTotalGames(usr2.getTotalGames() + 1);
-            usr1.setTotalGames(usr1.getTotalGames() + 1);
-            updateRank();
-            saveAllData();
-=======
-            gameWon(user_name, game, client, opponentClient, usr1, usr2);
->>>>>>> Stashed changes
         }
         else if (isGameDraw)
         {
@@ -1328,6 +1298,10 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
 
             usr2.setTotalGames(usr2.getTotalGames() + 1);
             usr1.setTotalGames(usr1.getTotalGames() + 1);
+
+            sendMsg(client, boardOnly);
+            sendMsg(opponentClient, boardOnly);
+
             updateRank();
             saveAllData();
         }
@@ -1339,6 +1313,9 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
             message += "\n" + updatedBoard;
 
             sendMsg(client, message);
+            sendMsg(client, boardOnly);
+            sendMsg(opponentClient, boardOnly);
+
             sendEmptyMsg(client);
             sendMsg(opponentClient, message);
             sendEmptyMsg(opponentClient);
