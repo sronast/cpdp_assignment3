@@ -43,11 +43,12 @@ public:
     std::string status;  // "init", "sent", "delivered", "read"
     std::string time;
     string header;
+    int has_read;
     int id;
     string to;
     // Constructor
-    Mail(int id, string from, string msg, string status, string time, string header);
-    Mail();
+    Mail(int id, string from, string msg, string status, string time, string header):has_read(0){}
+    Mail():has_read(0){}
     ~Mail();
     // Getters and setters for member variables
     string getFrom() const;

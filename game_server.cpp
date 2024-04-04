@@ -449,7 +449,19 @@ void GameServer::handleLogin(int &client, bool &is_empty_msg, vector<string> &to
             oss << "Successfully logged in..\n <" << usr_name << ">:";
             string msg = oss.str();
             sendMsg(client, msg);
-            msg = "User Info: " + usr.info;
+
+            int unreadMsg = 0;
+            vector<Mail> userMails = allUserMails[usr_name];
+
+            for(auto mail: userMails){
+                if(mail.status == "unread"){
+                    unreadMsg +=1;
+                }
+            }
+
+
+
+            msg = "User Info: " + usr.info + "\nYou have "+to_string(unreadMsg)+" unread messages..";
             sendMsg(client, msg);
             sendEmptyMsg(client);
         }
@@ -1063,10 +1075,11 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
         vector<Mail> mails = allUserMails[username];
         cout << "in read mail: \n";
         string msg = "======Reading Mail=====";
-        for (const auto it : mails)
+        for (auto &it : mails)
         {
             if (it.getId() == stoi(idToMatch))
             {
+                it.status = "read";
                 msg = msg + "\nFrom: " + it.from + "\nID: " + to_string(it.getId()) + "\nHeader: " + it.getHeaders();
                 msg = msg + "\nMessage: " + it.getMsg() + "\nTime: " + it.getTime() + "\n";
                 break;
