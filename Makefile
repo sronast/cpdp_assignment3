@@ -21,7 +21,8 @@ utilities.o: utilities.cpp
 	$(CC) $(CFLAGS) -c utilities.cpp
 
 clean:
-	rm a.out
+	rm server
+	rm users/*
 
 mymake.o : mymake.cpp
 	$(CC) $(CFLAGS) -c mymake.cpp

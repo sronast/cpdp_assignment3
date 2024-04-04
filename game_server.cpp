@@ -11,14 +11,14 @@ string draftMsg = "";
 void handleAlarm(int sig)
 {
     // Reset the alarm for another 5 minutes (300 seconds)
-    alarm(10);
+    alarm(120);
 }
 
 GameServer::GameServer(int port)
 {
 
     signal(SIGALRM, handleAlarm);
-    alarm(10);
+    alarm(120);
 
     server_port = port;
     init_message = R"(      
@@ -812,8 +812,15 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
                 // get the other user
                 winner = game.user2;
             }
-            User &opponent = allUsersInfo[game.user2];
-            int opponentClient = user_socket_map[game.user2];
+            User &opponent = allUsersInfo[winner];
+            int opponentClient = user_socket_map[winner];
+
+            string observerMsg = user.getUsername() + " has resigned the game!";
+            for (auto it : game.observers)
+            {
+                sendMsg(it, observerMsg);
+                sendEmptyMsg(it);
+            }
 
             gameWon(winner, game, opponentClient, client, user, opponent);
 
@@ -826,12 +833,7 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
             sendEmptyMsg(opponentClient);
 
             // alert all observers too
-            string observerMsg = user.getUsername() + " has resigned the game!";
-            for (auto it : game.observers)
-            {
-                sendMsg(it, observerMsg);
-                sendEmptyMsg(it);
-            }
+
             // remove the game
             all_games.erase(gameId);
         }
@@ -906,7 +908,8 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
             {
                 continue;
             }
-            message += it + " ";
+            message += it;
+            message += " ";
         }
         string userFrom = socket_user_map[client];
 
@@ -1064,8 +1067,8 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
         {
             if (it.getId() == stoi(idToMatch))
             {
-                msg = msg + "\nFrom: "+ it.from +"\nID: " + to_string(it.getId()) + "\nHeader: "+it.getHeaders();
-                msg = msg + "\nMessage: "+ it.getMsg() + "\nTime: "+ it.getTime() + "\n";
+                msg = msg + "\nFrom: " + it.from + "\nID: " + to_string(it.getId()) + "\nHeader: " + it.getHeaders();
+                msg = msg + "\nMessage: " + it.getMsg() + "\nTime: " + it.getTime() + "\n";
                 break;
                 // msg += to_string(it.getId()) + "\t" + it.getHeaders() + "\t" + it.getMsg() + "\t" + it.getTime() + "\n";
             }
@@ -1187,6 +1190,7 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
         user.setPassword(tokens[1]);
         string msg = "Password changed successfully! \n <" + username + ">: ";
         sendMsg(client, msg);
+        sendEmptyMsg(client);
     }
     else if (command == "help" || command == "?")
     {
@@ -1253,8 +1257,10 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
         double time_diff = difftime(currentTime, game.previousMoveTime);
         game.previousMoveTime = currentTime;
 
+        double rem_tim = 0.0;
         if (currentUser == user1)
         {
+
             cout << "============User to move changed...........\n";
             userToMove = user2;
             opponentClient = user_socket_map[userToMove];
@@ -1262,15 +1268,21 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
             if (time_diff > game.user1Time)
             {
                 cout << "Your timer has already been expired....You lost the game...from if";
+
+                cout << "USR2 Client: " << client;
+
                 string mmssgg = currentUser + " time has been expired\n";
+
                 sendMsg(client, mmssgg);
                 // call fuction to end the game
-                gameWon(userToMove, game, opponentClient, client, usr2, usr1);
+                gameWon(user2, game, user_socket_map[user2], client, usr1, usr2);
+                // gameWon(userToMove, game, opponentClient, client, usr2, usr1);
                 return;
             }
             else
             {
-                game.user1Time = game.user1Time - time_diff; 
+                game.user1Time = game.user1Time - time_diff;
+                rem_tim = game.user2Time;
             }
         }
         else
@@ -1279,15 +1291,18 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
             if (time_diff > game.user2Time)
             {
                 cout << "Your timer has already been expired....You lost the game...from else";
+
                 string mmssgg = currentUser + " time has been expired\n";
                 sendMsg(client, mmssgg);
-                gameWon(userToMove, game, client, opponentClient, usr2, usr1);
+                gameWon(user1, game, user_socket_map[user1], client, usr2, usr1);
+                // gameWon(userToMove, game, client, opponentClient, usr2, usr1);
                 return;
                 // call fuction to end the game
             }
             else
             {
                 game.user2Time = game.user2Time - time_diff;
+                rem_tim = game.user1Time;
             }
         }
 
@@ -1301,6 +1316,7 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
             if (it == " ")
             {
                 isGameDraw = false;
+                break;
             }
         }
         cout << "game won is " << isGameWon << endl;
@@ -1313,7 +1329,7 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
         boardOnly += "\n";
         if (isGameWon)
         {
-            gameWon(user_name, game, client, opponentClient, usr1, usr2);
+            gameWon(currentUser, game, client, opponentClient, usr1, usr2);
             sendMsg(client, boardOnly);
             sendMsg(opponentClient, boardOnly);
             sendEmptyMsg(client);
@@ -1347,15 +1363,22 @@ void GameServer::handleRegisteredUser(int &client, bool &is_empty_msg, vector<st
             usr2.setTotalGames(usr2.getTotalGames() + 1);
             usr1.setTotalGames(usr1.getTotalGames() + 1);
 
-            sendMsg(client, boardOnly);
             sendMsg(opponentClient, boardOnly);
+            sendEmptyMsg(opponentClient);
+            sendMsg(client, boardOnly);
+            sendEmptyMsg(client);
 
+            cout << "\n\nErase aghai..." << endl;
+            all_games.erase(usr1.currentGameId);
+            cout << "\n\nErase paxi..." << endl;
             updateRank();
             saveAllData();
+            return;
         }
         else
         {
             string message = "\nUser to move: " + userToMove + "\n";
+            message = message +userToMove+ " remaining time: "+ to_string(rem_tim) + "\n";
 
             string updatedBoard = game.displayBoard();
             message += "\n" + updatedBoard;
@@ -1421,7 +1444,7 @@ void GameServer::gameWon(std::string &user_name, TicTacToe &game, int &client, i
         // Usr1 has won
         usr1.setWins(usr1.getWins() + 1);
         usr1.setPoints(usr1.getPoints() + 3);
-        usr2.setLoss(usr1.getLoss() + 1);
+        usr2.setLoss(usr2.getLoss() + 1);
     }
     else
     {
@@ -1438,11 +1461,13 @@ void GameServer::gameWon(std::string &user_name, TicTacToe &game, int &client, i
 
     usr2.setTotalGames(usr2.getTotalGames() + 1);
     usr1.setTotalGames(usr1.getTotalGames() + 1);
-    updateRank();
-    saveAllData();
+
     cout << "\n\nErase aghai..." << endl;
     all_games.erase(usr1.currentGameId);
     cout << "\n\nErase paxi..." << endl;
+
+    updateRank();
+    saveAllData();
 }
 
 void GameServer::handleEmptyMsg(int &client)
@@ -1528,6 +1553,10 @@ void GameServer::sendMsg(int &client, string &msg)
 void GameServer::sendEmptyMsg(int &client)
 {
     string username = socket_user_map[client];
+    if (username == "")
+    {
+        username = "guest";
+    }
     string msg = "\n<" + username + ">: ";
     if (send(client, msg.c_str(), msg.length(), 0) < 0)
     {

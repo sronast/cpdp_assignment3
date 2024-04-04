@@ -1,3 +1,4 @@
-Username: b, Points: 12, Rank: 1
+Username: b, Points: 6, Rank: 1
 Username: a, Points: 3, Rank: 2
 Username: c, Points: 0, Rank: 3
+Username: , Points: 0, Rank: 4
